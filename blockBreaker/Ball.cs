@@ -1,6 +1,8 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace blockBreaker
 {
@@ -8,7 +10,7 @@ namespace blockBreaker
     {
         Texture2D ballTexture;
         float speed = 125f, radius;
-        Vector2 position, direction;
+        public Vector2 position, direction;
 
         public Texture2D BallTexture
         {
@@ -25,17 +27,11 @@ namespace blockBreaker
             get { return radius; }
             set { radius = value; }
         }
-        public Vector2 Position
-        {
-            get { return position; }
-            set { position = value; }
-        }
-        public Vector2 Direction
-        {
-            get { return direction; }
-            set { direction = value; }
-        }
 
+        public void Update(float deltaTime)
+        {
+            position += direction * speed * deltaTime;
+        }
         // still need to add constructors
     }
 }
