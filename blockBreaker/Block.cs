@@ -11,6 +11,8 @@ namespace blockBreaker
         private int durability, status;
         Texture2D blockType;
         public Vector2 position;
+        public int BlockWidth = 50;
+        public int BlockHeight = 25;
 
         public Texture2D BlockType
         {

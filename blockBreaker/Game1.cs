@@ -7,7 +7,8 @@ using System.Collections.Generic;
 // TODO: Add constructors for ball and paddle 
 // NOTES: Implement 'physics' into game. Add a new background. Grey blocks are unbreakable. 
 //       Maybe manually design shape of level in combination with randomly adding unbreakable blocks.
-//       Want to be able to adjust paddle width and sensetivity;
+//       Want to be able to adjust paddle width and sensetivity; Collect data (save exactly what the user is doing, and any events (like score, levels, bonuses etc.),
+ //      and output to a text file). Also want to keep track of how many days or time the user is playing the game. Idea for 
 namespace blockBreaker
 {
     /// <summary>
@@ -47,7 +48,7 @@ namespace blockBreaker
                                          graphics.PreferredBackBufferHeight / 1.2f);
             ball.position = new Vector2(graphics.PreferredBackBufferWidth / 2, 
                                        graphics.PreferredBackBufferHeight / 1.2f - 16); // draw on top of paddle (-y is up)
-            paddle.Speed = 205f;
+            paddle.Speed = 215f;
             ball.Speed = 195f;
             ball.direction = new Vector2(0.707f, -0.707f);
             mapSize = 20;
@@ -74,29 +75,27 @@ namespace blockBreaker
                 if (i < mapSize / 4)
                 {
                     Block b = new Block(Content.Load<Texture2D>("BlueBlockFX"));
-                    int z = b.BlockType.Width;
-                    int y = b.BlockType.Height;
-                    b.position = new Vector2(i * 50, 25);
+                    b.position = new Vector2(i * b.BlockWidth, b.BlockHeight);
                     blocks.Add(b);
 
                 }
                 else if (i > mapSize / 4 && i < mapSize / 2)
                 {
                     Block b = new Block(Content.Load<Texture2D>("GreenBlockFX"));
-                    b.position = new Vector2(i * 50, 50);
+                    b.position = new Vector2(i * b.BlockWidth, b.BlockHeight * 2);
                     blocks.Add(b);
                 }
                 else if (i > mapSize / 2 && i < mapSize)
                 {
                     Block b = new Block(Content.Load<Texture2D>("RedBlockFX"));
-                    b.position = new Vector2(i * 50, 75);
+                    b.position = new Vector2(i * b.BlockWidth, b.BlockHeight * 3);
                     blocks.Add(b);
 
-                }
+                }   
                 else
                 {
                     Block b = new Block(Content.Load<Texture2D>("OrangeBlockFX"));
-                    b.position = new Vector2(i * 50, 100);
+                    b.position = new Vector2(i * b.BlockWidth, b.BlockWidth * 4);
                     blocks.Add(b);
                 }
             }
@@ -134,7 +133,7 @@ namespace blockBreaker
                 paddle.position.X += paddle.Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (Keyboard.GetState().IsKeyDown(Keys.Left))
                 paddle.position.X -= paddle.Speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-            
+
 
             ball.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
             base.Update(gameTime);
@@ -157,14 +156,29 @@ namespace blockBreaker
             spriteBatch.Begin();
 
             foreach (Block b in blocks)
-                spriteBatch.Draw(b.BlockType, new Rectangle((int)b.position.X,(int)b.position.Y, 50, 25), Color.White);
-               
+                spriteBatch.Draw(b.BlockType, new Rectangle((int)b.position.X,(int)b.position.Y, (int)b.BlockWidth, (int)b.BlockHeight), Color.White);               
               
 
             spriteBatch.Draw(paddle.PaddleTexture, paddle.position, null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
             spriteBatch.Draw(ball.BallTexture, ball.position, null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
             spriteBatch.End();
             base.Draw(gameTime);
+        }
+
+        private bool intersects(double circle_x, double circle_y, double circle_r, double rect_x, double rect_y, double rect_width, double rect_height)
+        {
+            double circleDistance_x = Math.Abs(circle_x - rect_x);
+            double circleDistance_y = Math.Abs(circle_y - rect_y);
+
+            if (circleDistance_x > (rect_width/2 + circle_r)) { return false; }
+            if (circleDistance_y > (rect_height/2 + circle_r)) { return false; }
+
+            if (circleDistance_x <= (rect_width/2)) { return true; } 
+            if (circleDistance_y <= (rect_height/2)) { return true; }
+
+            double cornerDistance_sq = Math.Pow((circleDistance_x - rect_width/2), 2) + Math.Pow((circleDistance_y - rect_height/2), 2);
+
+            return (cornerDistance_sq <= Math.Pow(circle_r, 2));
         }
 
         protected void CheckCollisions()
@@ -203,20 +217,37 @@ namespace blockBreaker
             {
                 ballWithPaddle--;
             }
+
             // Check for blocks
             // First, let's see if we collided with any block
             Block collidedBlock = null;
 
             foreach (Block b in blocks)
             {
-                if ((ball.position.X > (b.position.X - b.BlockType.Width / 4 - ball.Radius / 2)) &&
+                /*if ((ball.position.X > (b.position.X - b.BlockType.Width / 4 - ball.Radius / 2)) &&
                     (ball.position.X < (b.position.X + b.BlockType.Width / 4 + ball.Radius / 2)) &&
                     (ball.position.Y > (b.position.Y - b.BlockType.Height / 5 - ball.Radius / 2)) &&
                     (ball.position.Y < (b.position.Y + b.BlockType.Height / 5 + ball.Radius / 2)))
                 {
                     collidedBlock = b;
                     break;
+                }*/
+                if (intersects(ball.position.X, ball.position.Y, ball.Radius, b.position.X, b.position.Y, b.BlockWidth, b.BlockHeight))
+                {
+                    collidedBlock = b;
+                    break;
                 }
+                /*
+                if (
+                    ((ball.position.X + ball.Radius) > b.position.X)  &&
+                    ((ball.position.X - ball.Radius) < (b.position.X + b.BlockWidth)) &&
+                    ((ball.position.Y - ball.Radius) > (b.position.Y + b.BlockHeight)) &&
+                    ((ball.position.Y + ball.Radius) < b.position.Y)
+                   )
+                {
+                    collidedBlock = b;
+                    break;
+                }*/
             }
 
             // Now figure out how to reflect the ball
@@ -225,9 +256,9 @@ namespace blockBreaker
                 // Assume that if our Y is close to the top or bottom of the block,
                 // we're colliding with the top or bottom
                 if ((ball.position.Y <
-                    (collidedBlock.position.Y - collidedBlock.BlockType.Height / 5)) ||
+                    (collidedBlock.position.Y - collidedBlock.BlockHeight)) ||
                     (ball.position.Y >
-                    (collidedBlock.position.Y + collidedBlock.BlockType.Height / 5)))
+                    (collidedBlock.position.Y + collidedBlock.BlockHeight)))
                 {
                     ball.direction.Y = -1.0f * ball.direction.Y;
                 }
