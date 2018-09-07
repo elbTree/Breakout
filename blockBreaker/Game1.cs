@@ -43,17 +43,17 @@ namespace blockBreaker
             // TODO: Add your initialization logic here
             ball = new Ball();
             paddle = new Paddle();
-            paddle.position = new Vector2(graphics.PreferredBackBufferWidth / 4, // CHANGE TO / 2
+            paddle.position = new Vector2(graphics.PreferredBackBufferWidth / 4, // CHANGE TO / 2 once ball spawns on paddle
                                          graphics.PreferredBackBufferHeight / 1.2f);
             ball.position = new Vector2(graphics.PreferredBackBufferWidth / 2, 
                                        graphics.PreferredBackBufferHeight / 1.2f - 16); // draw on top of paddle (-y is up)
-            paddle.Speed = 145f;
-            ball.Speed = 145f;
+            paddle.Speed = 205f;
+            ball.Speed = 195f;
             ball.direction = new Vector2(0.707f, -0.707f);
             mapSize = 20;
             difficulty = 1;
             rand = new Random();
-            map = new Block[mapSize,mapSize];
+            
             
             base.Initialize();
         }
@@ -71,18 +71,33 @@ namespace blockBreaker
             {
                 int randNum = rand.Next(0, 100);
 
-                for (int j = 0; j < mapSize; j++)
+                if (i < mapSize / 4)
                 {
-                    if (randNum >= 75)
-                        map[i,j] = new Block(Content.Load<Texture2D>("BlueBlockFX"));
-                    else if (randNum < 75 && randNum >= 50)
-                        map[i,j] = new Block(Content.Load<Texture2D>("GreenBlockFX"));
-                    else if (randNum < 50 && randNum >= 25)
-                        map[i,j] = new Block(Content.Load<Texture2D>("RedBlockFX"));
-                    else
-                        map[i,j] = new Block(Content.Load<Texture2D>("OrangeBlockFX"));
+                    Block b = new Block(Content.Load<Texture2D>("BlueBlockFX"));
+                    int z = b.BlockType.Width;
+                    int y = b.BlockType.Height;
+                    b.position = new Vector2(i * 50, 25);
+                    blocks.Add(b);
 
-                    randNum = rand.Next(0, 100);
+                }
+                else if (i > mapSize / 4 && i < mapSize / 2)
+                {
+                    Block b = new Block(Content.Load<Texture2D>("GreenBlockFX"));
+                    b.position = new Vector2(i * 50, 50);
+                    blocks.Add(b);
+                }
+                else if (i > mapSize / 2 && i < mapSize)
+                {
+                    Block b = new Block(Content.Load<Texture2D>("RedBlockFX"));
+                    b.position = new Vector2(i * 50, 75);
+                    blocks.Add(b);
+
+                }
+                else
+                {
+                    Block b = new Block(Content.Load<Texture2D>("OrangeBlockFX"));
+                    b.position = new Vector2(i * 50, 100);
+                    blocks.Add(b);
                 }
             }
             paddle.PaddleTexture = Content.Load<Texture2D>("paddle");
@@ -141,11 +156,10 @@ namespace blockBreaker
             // TODO: Add your drawing code here
             spriteBatch.Begin();
 
-            for (int i = 0; i < mapSize / 2; i++)
-                for (int j = 0; j < 5; j++)
-                    spriteBatch.Draw(map[i,j].BlockType, new Rectangle(i * 50 + graphics.PreferredBackBufferWidth / 6, 
-                                                                       j * 25, 50, 25), Color.White);
-                
+            foreach (Block b in blocks)
+                spriteBatch.Draw(b.BlockType, new Rectangle((int)b.position.X,(int)b.position.Y, 50, 25), Color.White);
+               
+              
 
             spriteBatch.Draw(paddle.PaddleTexture, paddle.position, null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
             spriteBatch.Draw(ball.BallTexture, ball.position, null, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0f);
@@ -157,7 +171,7 @@ namespace blockBreaker
         {
             // Check for paddle
             if (ballWithPaddle == 0 &&
-                (ball.position.X > (paddle.position.X - ball.Radius - paddle.Width / 12)) && // Left, Right, and top half of paddle
+                (ball.position.X > (paddle.position.X - ball.Radius - paddle.Width / 14)) && // Left, Right, and top half of paddle
                 (ball.position.X < (paddle.position.X + ball.Radius + paddle.Width)) &&
                 (ball.position.Y < paddle.position.Y) &&
                 (ball.position.Y > (paddle.position.Y - ball.Radius - paddle.Height / 2)))
@@ -168,21 +182,18 @@ namespace blockBreaker
                 Vector2 normal = -1.0f * Vector2.UnitY;
 
                 // Distance from the leftmost to rightmost part of the paddle
-                float dist = paddle.Width + ball.Radius * 2;
+                float dist = (paddle.Width * 4) + ball.Radius * 2; // * 4 is just a hacky way to get the correct measurement
                 // Where within this distance the ball is at
                 float ballLocation = ball.position.X -
-                    (paddle.position.X - ball.Radius - paddle.Width / 2);
+                    (paddle.position.X - ball.Radius - paddle.Width);
                 // Percent between leftmost and rightmost part of paddle
                 float pct = ballLocation / dist;
 
                 if (pct < 0.33f)
-                {
                     normal = new Vector2(-0.196f, -0.981f);
-                }
+                
                 else if (pct > 0.66f)
-                {
                     normal = new Vector2(0.196f, -0.981f);
-                }
 
                 ball.direction = Vector2.Reflect(ball.direction, normal);
                 // No collisions between ball and paddle for 20 frames
@@ -191,6 +202,42 @@ namespace blockBreaker
             else if (ballWithPaddle > 0)
             {
                 ballWithPaddle--;
+            }
+            // Check for blocks
+            // First, let's see if we collided with any block
+            Block collidedBlock = null;
+
+            foreach (Block b in blocks)
+            {
+                if ((ball.position.X > (b.position.X - b.BlockType.Width / 4 - ball.Radius / 2)) &&
+                    (ball.position.X < (b.position.X + b.BlockType.Width / 4 + ball.Radius / 2)) &&
+                    (ball.position.Y > (b.position.Y - b.BlockType.Height / 5 - ball.Radius / 2)) &&
+                    (ball.position.Y < (b.position.Y + b.BlockType.Height / 5 + ball.Radius / 2)))
+                {
+                    collidedBlock = b;
+                    break;
+                }
+            }
+
+            // Now figure out how to reflect the ball
+            if (collidedBlock != null)
+            {
+                // Assume that if our Y is close to the top or bottom of the block,
+                // we're colliding with the top or bottom
+                if ((ball.position.Y <
+                    (collidedBlock.position.Y - collidedBlock.BlockType.Height / 5)) ||
+                    (ball.position.Y >
+                    (collidedBlock.position.Y + collidedBlock.BlockType.Height / 5)))
+                {
+                    ball.direction.Y = -1.0f * ball.direction.Y;
+                }
+                else // otherwise, we have to be colliding from the sides
+                {
+                    ball.direction.X = -1.0f * ball.direction.X;
+                }
+
+                // Now remove this block from the list
+                blocks.Remove(collidedBlock);
             }
             // Check walls
             if (Math.Abs(ball.position.X) < ball.Radius / 4)

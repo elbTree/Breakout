@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace blockBreaker
@@ -14,6 +10,7 @@ namespace blockBreaker
         // status indicates whether the block is fractured/shattered
         private int durability, status;
         Texture2D blockType;
+        public Vector2 position;
 
         public Texture2D BlockType
         {
