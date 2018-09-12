@@ -4,21 +4,67 @@ using Microsoft.Xna.Framework.Graphics;
 namespace blockBreaker
 {
 
+    public enum BlockColor
+    {
+        Red = 0,
+        Yellow,
+        Blue,
+        Green,
+        Purple,
+        Orange,
+        Grey,
+        Rainbow
+    }
+
     class Block
     {
+
         // durability determines how many hits to break the block
         // status indicates whether the block is fractured/shattered
         private int durability, status;
-        Texture2D blockType;
-        public Vector2 position;
         public int BlockWidth = 50;
-        public int BlockHeight = 25;
+        public int BlockHeight = 20;
+        public Vector2 position;
+        Texture2D texture;
+        BlockColor color;
 
-        public Texture2D BlockType
+        public Block(BlockColor myColor, Game myGame)
         {
-            get { return blockType; }
+           
+            color = myColor;
+            switch (color)
+            {
+                case (BlockColor.Red):
+                    texture = myGame.Content.Load<Texture2D>("RedBlockFX");
+                    break;
+                case (BlockColor.Yellow):
+                    texture = myGame.Content.Load<Texture2D>("YellowBlockFX");
+                    break;
+                case (BlockColor.Blue):
+                    texture = myGame.Content.Load<Texture2D>("BlueBlockFX");
+                    break;
+                case (BlockColor.Green):
+                    texture = myGame.Content.Load<Texture2D>("GreenBlockFX");
+                    break;
+                case (BlockColor.Purple):
+                    texture = myGame.Content.Load<Texture2D>("PurpleBlockFX");
+                    break;
+                case (BlockColor.Orange):
+                    texture = myGame.Content.Load<Texture2D>("OrangeBlockFX");
+                    break;
+                case (BlockColor.Grey):
+                    texture = myGame.Content.Load<Texture2D>("GrayBlockFX");
+                    break;
+                case (BlockColor.Rainbow):
+                    texture = myGame.Content.Load<Texture2D>("RainbowBlockFX");
+                    break;
+            }
+        }
+        public Texture2D Texture
+        {
+            get { return texture; }
 
-            set { blockType = value; }
+            set { texture = value; }
         }
 
         public int Durability
@@ -35,9 +81,8 @@ namespace blockBreaker
             set { status = value; }
         }
 
-        public Block(Texture2D bType, int dur, int stat) { blockType = bType; durability = dur; status = stat; }
+        public Block(Texture2D t) { texture = t; }
 
-        public Block(Texture2D bType) { blockType = bType; }
     }
 
 }

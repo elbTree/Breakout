@@ -9,8 +9,8 @@ namespace blockBreaker
     class Ball
     {
         Texture2D ballTexture;
-        float speed = 125f, radius;
-        public Vector2 position, direction;
+        float speed, radius;
+        public Vector2 position, direction = new Vector2(0.707f, -0.707f);
 
         public Texture2D BallTexture
         {
@@ -32,7 +32,7 @@ namespace blockBreaker
         {
             position += direction * speed * deltaTime;
         }
-        // still need to add constructors
+        
     }
 }
 

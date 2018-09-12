@@ -1,15 +1,21 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace blockBreaker
 {
-    class Paddle
+    class Paddle : GameObject
     {
         Texture2D paddleTexture;
-        public Vector2 position;
-        float speed;
+        float speed = 500;
         int height, width;
+
+        public Paddle(Game myGame) :
+            base(myGame)
+        {
+            textureName = "paddle";
+        }
 
         public Texture2D PaddleTexture
         {
@@ -22,17 +28,24 @@ namespace blockBreaker
             get { return speed; }
             set { speed = value; }
         }
-        public int Height
+
+        public override void Update(float deltaTime)
         {
-            get { return height; }
-            set { height = value; }
-        }
-        public int Width
-        {
-            get { return width; }
-            set { width = value; }
+            float screenWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+            // Paddle movement
+            KeyboardState keyState = Keyboard.GetState();
+            if (keyState.IsKeyDown(Keys.Left))
+            {
+                position.X -= speed * deltaTime;
+            }
+            else if (keyState.IsKeyDown(Keys.Right))
+            {
+                position.X += speed * deltaTime;
+            }
+            // Clamp paddle to valid range
+            position.X = MathHelper.Clamp(position.X, texture.Width / 2, screenWidth - texture.Width / 2);
+            base.Update(deltaTime);
         }
 
-        // still need to add constructors
     }
 }
