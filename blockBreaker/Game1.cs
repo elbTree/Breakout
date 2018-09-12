@@ -23,28 +23,36 @@ namespace blockBreaker
         Paddle paddle;
         Ball ball;
 
-        SoundEffect ballHit,
-                    ballBounce,
-                    powerUp;
+        SoundEffect ballHitSFX,
+                    ballBounceSFX,
+                    powerUpSFX;
 
         int ballWithPaddle;
-        
+
         // mapSize determines the number of blocks, difficulty determines the width of the paddle
         // and the speed of the ball
-        int mapSize, difficulty;
+        int mapSize,
+            difficulty,
+            score = 0;
+
         List<Block> blocks = new List<Block>();
         Random rand;
+        PowerUp powerUp;
 
-        int screenWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
-        int screenHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+        SpriteFont font;
+
+        int FSscreenWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+        int FSscreenHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+        int windowScreenWidth = 1366;
+        int windowScreenHeight = 768;
 
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            graphics.IsFullScreen = true;
-            graphics.PreferredBackBufferWidth = screenWidth;
-            graphics.PreferredBackBufferHeight = screenHeight;
+            graphics.IsFullScreen = false;
+            graphics.PreferredBackBufferWidth = windowScreenWidth;
+            graphics.PreferredBackBufferHeight = windowScreenHeight;
         }
 
         /// <summary>
@@ -80,14 +88,16 @@ namespace blockBreaker
 
             paddle = new Paddle(this);
             paddle.LoadContent();
-            paddle.position = new Vector2(screenWidth / 2, screenHeight - paddle.Height * 2);
+            paddle.position = new Vector2(windowScreenWidth / 2, windowScreenHeight - paddle.Height * 2);
 
             ball.BallTexture = Content.Load<Texture2D>("ball");
             ball.Radius = ball.BallTexture.Width / 2;
 
-            ballHit = Content.Load<SoundEffect>("ball_hit");
-            ballBounce = Content.Load<SoundEffect>("ball_bounce");
-            powerUp = Content.Load<SoundEffect>("powerup");
+            ballHitSFX = Content.Load<SoundEffect>("ball_hit");
+            ballBounceSFX = Content.Load<SoundEffect>("ball_bounce");
+            powerUpSFX = Content.Load<SoundEffect>("powerup");
+
+          //  font = Content.Load<SpriteFont>("Arial");
 
             CreateLevel();
 
@@ -140,6 +150,12 @@ namespace blockBreaker
 
             paddle.Draw(spriteBatch);
             spriteBatch.Draw(ball.BallTexture, ball.position, Color.White);
+
+            powerUp.Draw();
+
+            //spriteBatch.DrawString(font, String.Format("Score: {0:#,###0}", score),
+            //           new Vector2(40, 50), Color.White);
+
             spriteBatch.End();
             base.Draw(gameTime);
         }
@@ -169,7 +185,7 @@ namespace blockBreaker
                 (ball.position.Y < paddle.position.Y) &&
                 (ball.position.Y > (paddle.position.Y - ball.Radius*2 - paddle.Height / 2)))
             {
-                ballBounce.Play();
+                ballBounceSFX.Play();
 
                 // Reflect based on which part of the paddle is hit
 
@@ -221,8 +237,15 @@ namespace blockBreaker
             // Determine ball reflection
             if (collidedBlock != null)
             {
-                ballHit.Play();
+                ballHitSFX.Play();
 
+                rand = Random(0, 100);
+                
+                if (rand > 80) 
+                    DropPowerUp(collidedBlock.position);
+                
+                score += 10;
+                
                 // Assume that if our Y is close to the top or bottom of the block,
                 // we're colliding with the top or bottom
                 if ((ball.position.Y <
@@ -244,17 +267,17 @@ namespace blockBreaker
             // Check walls
             if (Math.Abs(ball.position.X) < ball.Radius)
             {
-                ballBounce.Play();
+                ballBounceSFX.Play();
                 ball.direction.X = -1.0f * ball.direction.X;
             }
             else if (Math.Abs(ball.position.X - graphics.PreferredBackBufferWidth) < ball.Radius)
             {
-                ballBounce.Play();
+                ballBounceSFX.Play();
                 ball.direction.X = -1.0f * ball.direction.X;
             }
             else if (Math.Abs(ball.position.Y) < ball.Radius)
             {
-                ballBounce.Play();
+                ballBounceSFX.Play();
                 ball.direction.Y = -1.0f * ball.direction.Y;
             }
             else if (ball.position.Y > (graphics.PreferredBackBufferHeight + ball.Radius))
@@ -279,18 +302,46 @@ namespace blockBreaker
                {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
                {5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5},
                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-               {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
+               {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
             };
 
             for (int i = 0; i < blockLayout.GetLength(0); i++)
             {
                 for (int j = 0; j < blockLayout.GetLength(1); j++)
                 {
-                    Block b = new Block((BlockColor)blockLayout[i, j], this);
-                    b.position = new Vector2(j * b.BlockWidth + screenWidth / 4, i + screenHeight / 4 + b.BlockHeight*i);
+                    Block b = new Block((BlockColor)blockLayout[i, j], this); 
+                    b.position = new Vector2(j * b.BlockWidth + windowScreenWidth / 6, windowScreenHeight / 6 + b.BlockHeight * i);
                     blocks.Add(b);
                 }
             }
+        }
+
+        protected void DropPowerUp(Vector2 blockPos)
+        {
+            rand = Random(0, 120);
+            PowerUpType pType;
+            
+
+            if (rand <= 20)
+                pType = PowerUpType.MultiBall;
+            
+            else if (rand > 20 && rand <= 40)
+                pType = PowerUpType.PaddleSizeIncrease;
+            
+            else if (rand > 40 && rand <= 60)
+                pType = PowerUpType.Lasers;
+            
+            else if (rand > 60 && rand <= 80)
+                pType = PowerUpType.FireBall;
+            
+            else if (rand > 80 && rand <= 100)
+                pType = PowerUpType.FastBall;
+            
+             else
+                pType = PowerUpType.PaddleSizeDecrease;
+
+            powerUp = new PowerUp(pType, myGame);
+            powerUp.position = blockPos;
         }
     }
 }
