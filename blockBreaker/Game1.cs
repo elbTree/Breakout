@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
@@ -18,14 +19,22 @@ namespace blockBreaker
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
+
         Paddle paddle;
+        Ball ball;
+
+        SoundEffect ballHit,
+                    ballBounce,
+                    powerUp;
+
         int ballWithPaddle;
+        
         // mapSize determines the number of blocks, difficulty determines the width of the paddle
         // and the speed of the ball
         int mapSize, difficulty;
         List<Block> blocks = new List<Block>();
-        Ball ball;
         Random rand;
+
         int screenWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
         int screenHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
 
@@ -75,6 +84,10 @@ namespace blockBreaker
 
             ball.BallTexture = Content.Load<Texture2D>("ball");
             ball.Radius = ball.BallTexture.Width / 2;
+
+            ballHit = Content.Load<SoundEffect>("ball_hit");
+            ballBounce = Content.Load<SoundEffect>("ball_bounce");
+            powerUp = Content.Load<SoundEffect>("powerup");
 
             CreateLevel();
 
@@ -156,22 +169,27 @@ namespace blockBreaker
                 (ball.position.Y < paddle.position.Y) &&
                 (ball.position.Y > (paddle.position.Y - ball.Radius*2 - paddle.Height / 2)))
             {
+                ballBounce.Play();
+
                 // Reflect based on which part of the paddle is hit
 
                 // By default, set the normal to up
                 Vector2 normal = -1.0f * Vector2.UnitY;
-               // ball.direction = -1.0f * Vector2.UnitY;
+               // ball.direction = -1.0f * Vector2.UnitY;       // Changing direction explicitly makes the ball more predictable
+
                 // Distance from the leftmost to rightmost part of the paddle
                 float dist = paddle.Width + ball.Radius * 2;
+               
                 // Where within this distance the ball is at
                 float ballLocation = ball.position.X -
                     (paddle.position.X - ball.Radius - paddle.Width / 2);
+                
                 // Percent between leftmost and rightmost part of paddle
                 float pct = ballLocation / dist;
 
                 if (pct < 0.33f)
                     normal = new Vector2(-0.196f, -0.981f);
-                //   ball.direction = new Vector2(-1, -0.981f);
+                //   ball.direction = new Vector2(-1, -0.981f); 
 
                 else if (pct > 0.66f)
                     normal = new Vector2(0.196f, -0.981f);
@@ -187,8 +205,7 @@ namespace blockBreaker
                 ballWithPaddle--;
             }
 
-            // Check for blocks
-            // First, let's see if we collided with any block
+            // Check for block collisions
             Block collidedBlock = null;
 
             foreach (Block b in blocks)
@@ -201,9 +218,11 @@ namespace blockBreaker
               
             }
 
-            // Now figure out how to reflect the ball
+            // Determine ball reflection
             if (collidedBlock != null)
             {
+                ballHit.Play();
+
                 // Assume that if our Y is close to the top or bottom of the block,
                 // we're colliding with the top or bottom
                 if ((ball.position.Y <
@@ -221,17 +240,21 @@ namespace blockBreaker
                 // Now remove this block from the list
                 blocks.Remove(collidedBlock);
             }
+
             // Check walls
             if (Math.Abs(ball.position.X) < ball.Radius)
             {
+                ballBounce.Play();
                 ball.direction.X = -1.0f * ball.direction.X;
             }
             else if (Math.Abs(ball.position.X - graphics.PreferredBackBufferWidth) < ball.Radius)
             {
+                ballBounce.Play();
                 ball.direction.X = -1.0f * ball.direction.X;
             }
             else if (Math.Abs(ball.position.Y) < ball.Radius)
             {
+                ballBounce.Play();
                 ball.direction.Y = -1.0f * ball.direction.Y;
             }
             else if (ball.position.Y > (graphics.PreferredBackBufferHeight + ball.Radius))
@@ -240,10 +263,11 @@ namespace blockBreaker
             }
             
         }
+
         
-        // currently just loads a simple rectangle level, need to create different levels using jagged arrays
+        // Currently just loads a simple rectangle level, need to create different levels using jagged arrays
         // and once all the shapes have been played through once, it will loop with a different background
-        // and an increased difficulty (slightly faster ball and more durable/unbreakable blocks)
+        // and an increased difficulty (slightly faster ball, more durable/unbreakable blocks, slightly lower powerup frequency)
         protected void CreateLevel()
         {
             int[,] blockLayout = new int[,]{

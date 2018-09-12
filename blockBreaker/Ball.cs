@@ -9,7 +9,7 @@ namespace blockBreaker
     class Ball
     {
         Texture2D ballTexture;
-        float speed, radius;
+        float speed = 400, radius;
         public Vector2 position, direction = new Vector2(0.707f, -0.707f);
 
         public Texture2D BallTexture

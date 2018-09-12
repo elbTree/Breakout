@@ -20,6 +20,7 @@ namespace blockBreaker
         {
             get { return texture.Width; }
         }
+        
 
         public float Height
         {

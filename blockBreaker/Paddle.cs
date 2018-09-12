@@ -9,7 +9,6 @@ namespace blockBreaker
     {
         Texture2D paddleTexture;
         float speed = 500;
-        int height, width;
 
         public Paddle(Game myGame) :
             base(myGame)
