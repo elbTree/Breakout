@@ -80,7 +80,7 @@ namespace blockBreaker
 
             paddle = new Paddle(this);
             paddle.LoadContent();
-            paddle.position = new Vector2(512, 740);
+            paddle.position = new Vector2(screenWidth / 2, screenHeight - paddle.Height * 2);
 
             ball.BallTexture = Content.Load<Texture2D>("ball");
             ball.Radius = ball.BallTexture.Width / 2;
@@ -277,6 +277,9 @@ namespace blockBreaker
                {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
                {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
                {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
+               {5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5},
+               {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+               {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
             };
 
             for (int i = 0; i < blockLayout.GetLength(0); i++)
@@ -284,7 +287,7 @@ namespace blockBreaker
                 for (int j = 0; j < blockLayout.GetLength(1); j++)
                 {
                     Block b = new Block((BlockColor)blockLayout[i, j], this);
-                    b.position = new Vector2(j * b.BlockWidth + screenWidth / 6, i + screenHeight / 6 + b.BlockHeight*i);
+                    b.position = new Vector2(j * b.BlockWidth + screenWidth / 4, i + screenHeight / 4 + b.BlockHeight*i);
                     blocks.Add(b);
                 }
             }
