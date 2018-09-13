@@ -42,7 +42,7 @@ namespace blockBreaker
                 position.X += speed * deltaTime;
             }
             // Clamp paddle to valid range
-            position.X = MathHelper.Clamp(position.X, texture.Width / 2, screenWidth - 585); // for regular sized paddle and a 1366x768 window
+            position.X = MathHelper.Clamp(position.X, texture.Width / 2, screenWidth - 594); // for regular sized paddle and a 1366x768 window
             base.Update(deltaTime);
         }
 
