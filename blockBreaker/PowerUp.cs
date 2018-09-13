@@ -22,7 +22,7 @@ namespace blockBreaker
     public class PowerUp : GameObject
     {
         public PowerUpType type;
-        public float speed = 400;
+        public float speed = 200;
         public bool shouldRemove = false;
         public int screenHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
 

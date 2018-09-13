@@ -36,8 +36,10 @@ namespace blockBreaker
             score = 0;
 
         List<Block> blocks = new List<Block>();
+        List<PowerUp> powerUps = new List<PowerUp>();
         Random rand;
-        PowerUp powerUp;
+        
+       
 
         SpriteFont font;
 
@@ -128,6 +130,8 @@ namespace blockBreaker
             // TODO: Add your update logic here
             paddle.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
             ball.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+            foreach (PowerUp p in powerUps)
+                p.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
             
             CheckCollisions();
             base.Update(gameTime);
@@ -151,7 +155,8 @@ namespace blockBreaker
             paddle.Draw(spriteBatch);
             spriteBatch.Draw(ball.BallTexture, ball.position, Color.White);
 
-            powerUp.Draw();
+            foreach (PowerUp p in powerUps)
+                p.Draw(spriteBatch);
 
             //spriteBatch.DrawString(font, String.Format("Score: {0:#,###0}", score),
             //           new Vector2(40, 50), Color.White);
@@ -221,6 +226,7 @@ namespace blockBreaker
                 ballWithPaddle--;
             }
 
+
             // Check for block collisions
             Block collidedBlock = null;
 
@@ -238,11 +244,10 @@ namespace blockBreaker
             if (collidedBlock != null)
             {
                 ballHitSFX.Play();
-
-                rand = Random(0, 100);
+                int randNum = rand.Next(0, 120);
                 
-                if (rand > 80) 
-                    DropPowerUp(collidedBlock.position);
+                if (randNum > 0) 
+      //              DropPowerUp(collidedBlock.position);
                 
                 score += 10;
                 
@@ -263,6 +268,7 @@ namespace blockBreaker
                 // Now remove this block from the list
                 blocks.Remove(collidedBlock);
             }
+
 
             // Check walls
             if (Math.Abs(ball.position.X) < ball.Radius)
@@ -290,7 +296,7 @@ namespace blockBreaker
         
         // Currently just loads a simple rectangle level, need to create different levels using jagged arrays
         // and once all the shapes have been played through once, it will loop with a different background
-        // and an increased difficulty (slightly faster ball, more durable/unbreakable blocks, slightly lower powerup frequency)
+        // and a slightly increased difficulty (slightly faster ball, more durable/unbreakable blocks, lower powerup frequency)
         protected void CreateLevel()
         {
             int[,] blockLayout = new int[,]{
@@ -316,32 +322,59 @@ namespace blockBreaker
             }
         }
 
-        protected void DropPowerUp(Vector2 blockPos)
-        {
-            rand = Random(0, 120);
-            PowerUpType pType;
+        //protected void DropPowerUp(Vector2 blockPos)
+        //{
+        //    int randNum = rand.Next(0, 120);
+        //    PowerUpType pType;
             
 
-            if (rand <= 20)
-                pType = PowerUpType.MultiBall;
+        //    if (randNum <= 20)
+        //        pType = PowerUpType.MultiBall;
             
-            else if (rand > 20 && rand <= 40)
-                pType = PowerUpType.PaddleSizeIncrease;
+        //    else if (randNum > 20 && randNum <= 40)
+        //        pType = PowerUpType.PaddleSizeIncrease;
             
-            else if (rand > 40 && rand <= 60)
-                pType = PowerUpType.Lasers;
+        //    else if (randNum > 40 && randNum <= 60)
+        //        pType = PowerUpType.Lasers;
             
-            else if (rand > 60 && rand <= 80)
-                pType = PowerUpType.FireBall;
+        //    else if (randNum > 60 && randNum <= 80)
+        //        pType = PowerUpType.FireBall;
             
-            else if (rand > 80 && rand <= 100)
-                pType = PowerUpType.FastBall;
+        //    else if (randNum > 80 && randNum <= 100)
+        //        pType = PowerUpType.FastBall;
             
-             else
-                pType = PowerUpType.PaddleSizeDecrease;
+        //     else
+        //        pType = PowerUpType.PaddleSizeDecrease;
 
-            powerUp = new PowerUp(pType, myGame);
-            powerUp.position = blockPos;
-        }
+        //    PowerUp p = new PowerUp(pType, this);
+        //    p.position = blockPos;
+        //    p.LoadContent();
+        //    powerUps.Add(p);
+
+        //}
+
+        //private void PowerUpRetreived(Paddle paddle)
+        //{
+        //    Rectangle paddlePos = paddle.BoundingRect;
+
+
+        //    foreach (PowerUp p in powerUps)
+        //        if (paddlePos.Intersects(p.BoundingRect))
+        //            ActivatePowerUp(p);
+        //}
+
+        //protected void ActivatePowerUp(PowerUp p)
+        //{
+        //    p.shouldRemove = true;
+        //    powerUpSFX.Play();
+
+        //    // will implement this later, it will be used to determine how to activate the powerup
+        //    //switch(p.type)
+        //    //{
+
+        //    //}
+
+        //    powerUps.Remove(p);
+        //}
     }
 }
