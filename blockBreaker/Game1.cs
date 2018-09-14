@@ -17,11 +17,10 @@ namespace blockBreaker
     /// </summary>
     public class Game1 : Game
     {
-        GraphicsDeviceManager graphics;
+        public static GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
         Paddle paddle;
-        Ball ball;
 
         SoundEffect ballHitSFX,
                     ballBounceSFX,
@@ -36,6 +35,7 @@ namespace blockBreaker
             score = 0;
 
         List<Block> blocks = new List<Block>();
+        List<Ball> balls = new List<Ball>();
         List<PowerUp> powerUps = new List<PowerUp>();
         Random rand;
         
@@ -45,6 +45,7 @@ namespace blockBreaker
 
         int FSscreenWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
         int FSscreenHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+        
         int windowScreenWidth = 1366;
         int windowScreenHeight = 768;
 
@@ -66,11 +67,11 @@ namespace blockBreaker
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            ball = new Ball();
-            ball.position = new Vector2(graphics.PreferredBackBufferWidth / 2, 
-                                       graphics.PreferredBackBufferHeight / 1.2f - 16);
-            ball.Speed = 395f;
-            ball.direction = new Vector2(0.707f, -0.707f);
+            //ball = new Ball();
+            //ball.position = new Vector2(graphics.PreferredBackBufferWidth / 2, 
+            //                           graphics.PreferredBackBufferHeight / 1.2f - 16);
+            //ball.Speed = 395f;
+            //ball.direction = new Vector2(0.707f, -0.707f);
             mapSize = 20;
             difficulty = 1;
             rand = new Random();
@@ -92,8 +93,10 @@ namespace blockBreaker
             paddle.LoadContent();
             paddle.position = new Vector2(windowScreenWidth / 2, windowScreenHeight - paddle.Height * 2);
 
-            ball.BallTexture = Content.Load<Texture2D>("ball");
-            ball.Radius = ball.BallTexture.Width / 2;
+            SpawnBall();
+
+            //ball.BallTexture = Content.Load<Texture2D>("ball");
+            //ball.Radius = ball.BallTexture.Width / 2;
 
             ballHitSFX = Content.Load<SoundEffect>("ball_hit");
             ballBounceSFX = Content.Load<SoundEffect>("ball_bounce");
@@ -126,13 +129,59 @@ namespace blockBreaker
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
+            if (Keyboard.GetState().IsKeyDown(Keys.Space))
+            {
+                foreach (Ball b in balls)
+                    b.IsPaddleBall = false;
+            }
+
 
             // TODO: Add your update logic here
             paddle.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
-            ball.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+
+            foreach (Ball b in balls)
+            {
+                if (b.IsActive && b.IsPaddleBall)
+                {
+                    b.Speed = paddle.Speed;
+                    b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 4);
+                    b.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+                }
+                else
+                {
+                    //b.Speed = b.DefaultSpeed;
+                    //// By default, set the normal to up
+                    //Vector2 normal = -1.0f * Vector2.UnitY;
+                    //// b.direction = -1.0f * Vector2.UnitY;       // Changing direction explicitly makes the ball more predictable
+
+                    //// Distance from the leftmost to rightmost part of the paddle
+                    //float dist = paddle.Width + b.Radius * 2;
+
+                    //// Where within this distance the ball is at
+                    //float ballLocation = b.position.X -
+                    //    (paddle.position.X - b.Radius - paddle.Width / 2);
+
+                    //// Percent between leftmost and rightmost part of paddle
+                    //float pct = ballLocation / dist;
+
+                    //if (pct < 0.33f)
+                    //    normal = new Vector2(-0.196f, -0.981f);
+                       
+                    //else if (pct > 0.66f)
+                    //    normal = new Vector2(0.196f, -0.981f);
+                       
+
+                    //b.direction = Vector2.Reflect(b.direction, normal);
+                    b.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+                }
+            }
+
             foreach (PowerUp p in powerUps)
-                p.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
-            
+            {   
+                if (!p.shouldRemove)
+                    p.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+            }
+
             CheckCollisions();
             base.Update(gameTime);
         }
@@ -153,11 +202,17 @@ namespace blockBreaker
 
 
             paddle.Draw(spriteBatch);
-            spriteBatch.Draw(ball.BallTexture, ball.position, Color.White);
 
+            foreach (Ball b in balls)
+            {
+                if (b.IsActive)
+                    spriteBatch.Draw(b.BallTexture, b.position, Color.White);
+            }
             foreach (PowerUp p in powerUps)
-                p.Draw(spriteBatch);
-
+            {
+                if (!p.shouldRemove)
+                    p.Draw(spriteBatch);
+            }
             //spriteBatch.DrawString(font, String.Format("Score: {0:#,###0}", score),
             //           new Vector2(40, 50), Color.White);
 
@@ -183,112 +238,115 @@ namespace blockBreaker
 
         protected void CheckCollisions()
         {
-            // Check for paddle
-            if (ballWithPaddle == 0 &&
-                (ball.position.X > (paddle.position.X - ball.Radius*2 - paddle.Width / 2)) && // Left, Right, and top half of paddle
-                (ball.position.X < (paddle.position.X + ball.Radius*2 + paddle.Width / 2)) &&
-                (ball.position.Y < paddle.position.Y) &&
-                (ball.position.Y > (paddle.position.Y - ball.Radius*2 - paddle.Height / 2)))
+            foreach (Ball ball in balls)
             {
-                ballBounceSFX.Play();
-
-                // Reflect based on which part of the paddle is hit
-
-                // By default, set the normal to up
-                Vector2 normal = -1.0f * Vector2.UnitY;
-               // ball.direction = -1.0f * Vector2.UnitY;       // Changing direction explicitly makes the ball more predictable
-
-                // Distance from the leftmost to rightmost part of the paddle
-                float dist = paddle.Width + ball.Radius * 2;
-               
-                // Where within this distance the ball is at
-                float ballLocation = ball.position.X -
-                    (paddle.position.X - ball.Radius - paddle.Width / 2);
-                
-                // Percent between leftmost and rightmost part of paddle
-                float pct = ballLocation / dist;
-
-                if (pct < 0.33f)
-                    normal = new Vector2(-0.196f, -0.981f);
-                //   ball.direction = new Vector2(-1, -0.981f); 
-
-                else if (pct > 0.66f)
-                    normal = new Vector2(0.196f, -0.981f);
-                // ball.direction = new Vector2(1, -0.981f);
-
-
-                 ball.direction = Vector2.Reflect(ball.direction, normal);
-                // No collisions between ball and paddle for 20 frames
-                ballWithPaddle = 20;
-            }
-            else if (ballWithPaddle > 0)
-            {
-                ballWithPaddle--;
-            }
-
-
-            // Check for block collisions
-            Block collidedBlock = null;
-
-            foreach (Block b in blocks)
-            {                                                                               
-               if (intersects(ball.position.X, ball.position.Y, ball.Radius, b.position.X + b.BlockWidth / 3, b.position.Y, b.BlockWidth, b.BlockHeight))
+                // Check for paddle
+                if ((ballWithPaddle == 0 &&
+                    (ball.position.X > (paddle.position.X - ball.Radius * 2 - paddle.Width / 2)) && // Left, Right, and top half of paddle
+                    (ball.position.X < (paddle.position.X + ball.Radius * 2 + paddle.Width / 2)) &&
+                    (ball.position.Y < paddle.position.Y) &&
+                    (ball.position.Y > (paddle.position.Y - ball.Radius * 2 - paddle.Height / 2))))
                 {
-                    collidedBlock = b;
-                    break;
+                    ballBounceSFX.Play();
+
+                    // Reflect based on which part of the paddle is hit
+
+                    // By default, set the normal to up
+                    Vector2 normal = -1.0f * Vector2.UnitY;
+                    // ball.direction = -1.0f * Vector2.UnitY;       // Changing direction explicitly makes the ball more predictable
+
+                    // Distance from the leftmost to rightmost part of the paddle
+                    float dist = paddle.Width + ball.Radius * 2;
+
+                    // Where within this distance the ball is at
+                    float ballLocation = ball.position.X -
+                        (paddle.position.X - ball.Radius - paddle.Width / 2);
+
+                    // Percent between leftmost and rightmost part of paddle
+                    float pct = ballLocation / dist;
+
+                    if (pct < 0.33f)
+                        normal = new Vector2(-0.196f, -0.981f);
+                    //   ball.direction = new Vector2(-1, -0.981f); 
+
+                    else if (pct > 0.66f)
+                        normal = new Vector2(0.196f, -0.981f);
+                    // ball.direction = new Vector2(1, -0.981f);
+
+
+                    ball.direction = Vector2.Reflect(ball.direction, normal);
+                    // No collisions between ball and paddle for 20 frames
+                    ballWithPaddle = 20;
                 }
-              
-            }
-
-            // Determine ball reflection
-            if (collidedBlock != null)
-            {
-                ballHitSFX.Play();
-                int randNum = rand.Next(0, 120);
-                
-                if (randNum > 0) 
-      //              DropPowerUp(collidedBlock.position);
-                
-                score += 10;
-                
-                // Assume that if our Y is close to the top or bottom of the block,
-                // we're colliding with the top or bottom
-                if ((ball.position.Y <
-                    (collidedBlock.position.Y - collidedBlock.BlockHeight / 2)) ||
-                    (ball.position.Y >
-                    (collidedBlock.position.Y + collidedBlock.BlockHeight / 2)))
+                else if (ballWithPaddle > 0)
                 {
-                    ball.direction.Y = -1.0f * ball.direction.Y;
+                    ballWithPaddle--;
                 }
-                else // otherwise, we have to be colliding from the sides
+
+
+                // Check for block collisions
+                Block collidedBlock = null;
+
+                foreach (Block b in blocks)
                 {
+                    if (intersects(ball.position.X, ball.position.Y, ball.Radius, b.position.X + b.BlockWidth / 3, b.position.Y, b.BlockWidth, b.BlockHeight))
+                    {
+                        collidedBlock = b;
+                        break;
+                    }
+
+                }
+
+                // Determine ball reflection
+                if (collidedBlock != null)
+                {
+                    ballHitSFX.Play();
+                    int randNum = rand.Next(0, 120);
+
+                    if (randNum > 100)
+                        //              DropPowerUp(collidedBlock.position);
+
+                        score += 10;
+
+                    // Assume that if our Y is close to the top or bottom of the block,
+                    // we're colliding with the top or bottom
+                    if ((ball.position.Y <
+                        (collidedBlock.position.Y - collidedBlock.BlockHeight / 2)) ||
+                        (ball.position.Y >
+                        (collidedBlock.position.Y + collidedBlock.BlockHeight / 2)))
+                    {
+                        ball.direction.Y = -1.0f * ball.direction.Y;
+                    }
+                    else // otherwise, we have to be colliding from the sides
+                    {
+                        ball.direction.X = -1.0f * ball.direction.X;
+                    }
+
+                    // Now remove this block from the list
+                    blocks.Remove(collidedBlock);
+                }
+
+
+                // Check walls
+                if (Math.Abs(ball.position.X) < ball.Radius)
+                {
+                    ballBounceSFX.Play();
                     ball.direction.X = -1.0f * ball.direction.X;
                 }
-
-                // Now remove this block from the list
-                blocks.Remove(collidedBlock);
-            }
-
-
-            // Check walls
-            if (Math.Abs(ball.position.X) < ball.Radius)
-            {
-                ballBounceSFX.Play();
-                ball.direction.X = -1.0f * ball.direction.X;
-            }
-            else if (Math.Abs(ball.position.X - graphics.PreferredBackBufferWidth) < ball.Radius)
-            {
-                ballBounceSFX.Play();
-                ball.direction.X = -1.0f * ball.direction.X;
-            }
-            else if (Math.Abs(ball.position.Y) < ball.Radius)
-            {
-                ballBounceSFX.Play();
-                ball.direction.Y = -1.0f * ball.direction.Y;
-            }
-            else if (ball.position.Y > (graphics.PreferredBackBufferHeight + ball.Radius))
-            {
-                // respawn ball
+                else if (Math.Abs(ball.position.X - graphics.PreferredBackBufferWidth) < ball.Radius)
+                {
+                    ballBounceSFX.Play();
+                    ball.direction.X = -1.0f * ball.direction.X;
+                }
+                else if (Math.Abs(ball.position.Y) < ball.Radius)
+                {
+                    ballBounceSFX.Play();
+                    ball.direction.Y = -1.0f * ball.direction.Y;
+                }
+                else if (ball.position.Y > (graphics.PreferredBackBufferHeight + ball.Radius))
+                {
+                    SpawnBall();
+                }
             }
             
         }
@@ -320,6 +378,14 @@ namespace blockBreaker
                     blocks.Add(b);
                 }
             }
+        }
+
+        private void SpawnBall()
+        {
+            Ball b = new Ball(Content.Load<Texture2D>("ball"));
+            b.Radius = b.BallTexture.Width / 2;
+            b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 4);
+            balls.Add(b);
         }
 
         //protected void DropPowerUp(Vector2 blockPos)

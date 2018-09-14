@@ -60,6 +60,7 @@ namespace blockBreaker
                     break;
             }
         }
+
         public Texture2D Texture
         {
             get { return texture; }

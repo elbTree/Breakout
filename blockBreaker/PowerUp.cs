@@ -30,8 +30,9 @@ namespace blockBreaker
             base(myGame)
         {
             type = myType;
+
             switch (type)
-            {
+            {       // add 'magnet' paddle
                 case (PowerUpType.MultiBall):
                     textureName = "multi_ball_powerUp";
                     break;

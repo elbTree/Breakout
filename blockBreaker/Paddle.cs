@@ -30,7 +30,7 @@ namespace blockBreaker
 
         public override void Update(float deltaTime)
         {
-            float screenWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+            float screenWidth = Game1.graphics.PreferredBackBufferWidth;
             // Paddle movement
             KeyboardState keyState = Keyboard.GetState();
             if (keyState.IsKeyDown(Keys.Left))
@@ -42,7 +42,7 @@ namespace blockBreaker
                 position.X += speed * deltaTime;
             }
             // Clamp paddle to valid range
-            position.X = MathHelper.Clamp(position.X, texture.Width / 2, screenWidth - 594); // for regular sized paddle and a 1366x768 window
+            position.X = MathHelper.Clamp(position.X, texture.Width / 2, screenWidth - texture.Width / 2); 
             base.Update(deltaTime);
         }
 
