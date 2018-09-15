@@ -7,7 +7,6 @@ namespace blockBreaker
 {
     class Paddle : GameObject
     {
-        Texture2D paddleTexture;
         float speed = 500;
 
         public Paddle(Game myGame) :
@@ -16,10 +15,10 @@ namespace blockBreaker
             textureName = "paddle";
         }
 
-        public Texture2D PaddleTexture
+        public Texture2D Texture
         {
-            get { return paddleTexture; }
-            set { paddleTexture = value; }
+            get { return texture; }
+            set { texture = value; }
         }
 
         public float Speed
