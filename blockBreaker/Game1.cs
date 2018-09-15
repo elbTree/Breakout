@@ -39,23 +39,18 @@ namespace blockBreaker
         List<PowerUp> powerUps = new List<PowerUp>();
         Random rand;
         
-       
-
         SpriteFont font;
 
-        int FSscreenWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
-        int FSscreenHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
-        
-        int windowScreenWidth = 1366;
-        int windowScreenHeight = 768;
+        int screenWidth = 1366;
+        int screenHeight = 768;
 
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             graphics.IsFullScreen = false;
-            graphics.PreferredBackBufferWidth = windowScreenWidth;
-            graphics.PreferredBackBufferHeight = windowScreenHeight;
+            graphics.PreferredBackBufferWidth = screenWidth;
+            graphics.PreferredBackBufferHeight = screenHeight;
         }
 
         /// <summary>
@@ -67,11 +62,7 @@ namespace blockBreaker
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            //ball = new Ball();
-            //ball.position = new Vector2(graphics.PreferredBackBufferWidth / 2, 
-            //                           graphics.PreferredBackBufferHeight / 1.2f - 16);
-            //ball.Speed = 395f;
-            //ball.direction = new Vector2(0.707f, -0.707f);
+
             mapSize = 20;
             difficulty = 1;
             rand = new Random();
@@ -91,12 +82,9 @@ namespace blockBreaker
 
             paddle = new Paddle(this);
             paddle.LoadContent();
-            paddle.position = new Vector2(windowScreenWidth / 2, windowScreenHeight - paddle.Height * 2);
+            paddle.position = new Vector2(screenWidth / 2, screenHeight - paddle.Height * 2);
 
             SpawnBall();
-
-            //ball.BallTexture = Content.Load<Texture2D>("ball");
-            //ball.Radius = ball.BallTexture.Width / 2;
 
             ballHitSFX = Content.Load<SoundEffect>("ball_hit");
             ballBounceSFX = Content.Load<SoundEffect>("ball_bounce");
@@ -385,7 +373,7 @@ namespace blockBreaker
                 for (int j = 0; j < blockLayout.GetLength(1); j++)
                 {
                     Block b = new Block((BlockColor)blockLayout[i, j], this); 
-                    b.position = new Vector2(j * b.BlockWidth + windowScreenWidth / 6, windowScreenHeight / 6 + b.BlockHeight * i);
+                    b.position = new Vector2(j * b.BlockWidth + screenWidth / 6, screenHeight / 6 + b.BlockHeight * i);
                     blocks.Add(b);
                 }
             }
