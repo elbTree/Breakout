@@ -48,7 +48,7 @@ namespace blockBreaker
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            graphics.IsFullScreen = false;
+            graphics.IsFullScreen = true;
             graphics.PreferredBackBufferWidth = screenWidth;
             graphics.PreferredBackBufferHeight = screenHeight;
         }
@@ -249,14 +249,14 @@ namespace blockBreaker
 
                     
                     int randVal = rand.Next(0, 100);
-
+                    
                     // prevent ball from bouncing from wall to wall with no change in the Y direction
-                    if (ball.direction.Y == -1)
+                    if (ball.direction.Y == 0)
                     {
                         if (randVal > 50)
-                            ball.direction.Y = -.9f;
+                            ball.direction.Y = -0.2f;
                         else
-                            ball.direction.Y = -1.1f;
+                            ball.direction.Y = 0.2f;
                         
                     }
                     // prevent ball from going straight up/down with no change in the X direction
