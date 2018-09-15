@@ -144,34 +144,12 @@ namespace blockBreaker
                 if (b.IsActive && b.IsPaddleBall)
                 {
                     b.Speed = paddle.Speed;
-                    b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 4);
+                    b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 2.2f);
                     b.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
                 }
                 else
                 {
-                    //b.Speed = b.DefaultSpeed;
-                    //// By default, set the normal to up
-                    //Vector2 normal = -1.0f * Vector2.UnitY;
-                    //// b.direction = -1.0f * Vector2.UnitY;       // Changing direction explicitly makes the ball more predictable
-
-                    //// Distance from the leftmost to rightmost part of the paddle
-                    //float dist = paddle.Width + b.Radius * 2;
-
-                    //// Where within this distance the ball is at
-                    //float ballLocation = b.position.X -
-                    //    (paddle.position.X - b.Radius - paddle.Width / 2);
-
-                    //// Percent between leftmost and rightmost part of paddle
-                    //float pct = ballLocation / dist;
-
-                    //if (pct < 0.33f)
-                    //    normal = new Vector2(-0.196f, -0.981f);
-
-                    //else if (pct > 0.66f)
-                    //    normal = new Vector2(0.196f, -0.981f);
-
-
-                    //b.direction = Vector2.Reflect(b.direction, normal);
+                    b.Speed = b.DefaultSpeed;
                     b.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
                 }
             }
@@ -244,12 +222,13 @@ namespace blockBreaker
             {
                 // Check for paddle
                 if ((ballWithPaddle == 0 &&
-                    (ball.position.X > (paddle.position.X - ball.Radius * 2 - paddle.Width / 2)) && // Left, Right, and top half of paddle
-                    (ball.position.X < (paddle.position.X + ball.Radius * 2 + paddle.Width / 2)) &&
+                    (ball.position.X > (paddle.position.X - ball.Radius - paddle.Width / 2)) && // Left, Right, and top half of paddle
+                    (ball.position.X < (paddle.position.X + ball.Radius + paddle.Width / 2)) &&
                     (ball.position.Y < paddle.position.Y) &&
-                    (ball.position.Y > (paddle.position.Y - ball.Radius * 2 - paddle.Height / 2))))
+                    (ball.position.Y > (paddle.position.Y - ball.Radius - paddle.Height / 2))))
                 {
-                    ballBounceSFX.Play();
+                    if (!ball.IsPaddleBall)
+                        ballBounceSFX.Play();
 
                     // Reflect based on which part of the paddle is hit
 
@@ -267,42 +246,42 @@ namespace blockBreaker
                     // Percent between leftmost and rightmost part of paddle
                     float pct = ballLocation / dist;
 
-                    if (pct <= 0.20f) // far left
+                    if (pct <= 0.20f)                               // far left
                         normal = new Vector2(-0.196f, -0.981f);
-                    else if (pct <= 0.40f && pct > 0.20f) // left
+                    else if (pct > 0.20f && pct <= 0.40f)           // left
                         normal = new Vector2(-0.098f, -0.981f);
                     //   ball.direction = new Vector2(-1, -0.981f); 
-                    else if (pct > 0.40f && pct <= .60f) // middle
+                    else if (pct > 0.40f && pct <= .60f)            // middle
                         normal = new Vector2(0, -0.981f);
                     // ball.direction = new Vector2(1, -0.981f);
-                    else if (pct > .60f && pct <= .80)
+                    else if (pct > .60f && pct <= .80)              // right
                         normal = new Vector2(0.098f, -0.981f);
-                    else
+                    else                                            // far right
                         normal = new Vector2(0.196f, -0.981f);
 
-
-                    ball.direction = Vector2.Reflect(ball.direction, normal);
+                    
                     int randVal = rand.Next(0, 100);
+
+                    // prevent ball from bouncing from wall to wall with no change in the Y direction
                     if (ball.direction.Y == -1)
                     {
-                        float randY;
                         if (randVal > 50)
-                            randY = -.9f;
+                            ball.direction.Y = -.9f;
                         else
-                            randY = -1.1f;
-
-                        ball.direction = Vector2.Reflect(new Vector2(ball.direction.X, randY), normal);
+                            ball.direction.Y = -1.1f;
+                        
                     }
+                    // prevent ball from going straight up/down with no change in the X direction
                     if (ball.direction.X == 0)
                     {
-                        float randX;
                         if (randVal > 50)
-                            randX = -.1f;
+                            ball.direction.X = -.1f;
                         else
-                            randX = .1f;
-
-                        ball.direction = Vector2.Reflect(new Vector2(randX, ball.direction.Y), normal);
+                            ball.direction.X = .1f;
                     }
+
+                    ball.direction = Vector2.Reflect(ball.direction, normal);
+
                     // No collisions between ball and paddle for 20 frames
                     ballWithPaddle = 20;
                 }
@@ -416,7 +395,7 @@ namespace blockBreaker
         {
             Ball b = new Ball(Content.Load<Texture2D>("ball"));
             b.Radius = b.BallTexture.Width / 2;
-            b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 4);
+            b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 2.2f);
             balls.Add(b);
         }
 
