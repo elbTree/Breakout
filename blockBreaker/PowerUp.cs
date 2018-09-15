@@ -14,9 +14,7 @@ namespace blockBreaker
         MultiBall = 0,
         PaddleSizeIncrease,
         Lasers,
-        FireBall,
-        FastBall,
-        PaddleSizeDecrease
+        FireBall
     }
 
     public class PowerUp : GameObject
@@ -44,12 +42,6 @@ namespace blockBreaker
                     break;
                 case (PowerUpType.FireBall):
                     textureName = "fireball_powerUp";
-                    break;
-                case (PowerUpType.FastBall):
-                    textureName = "fastball_powerUp";
-                    break;
-                case (PowerUpType.PaddleSizeDecrease):
-                    textureName = "decrease_paddle_width_powerUp";
                     break;
             }
         }
