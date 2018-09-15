@@ -9,8 +9,8 @@ namespace blockBreaker
     class Ball
     {
         Texture2D ballTexture;
-        float defaultSpeed = 400;
-        float speed = 400, radius;
+        float defaultSpeed = 375;
+        float speed = 375, radius;
         bool isActive = true, isPaddleBall = true;
         public Vector2 position, direction = new Vector2(0, -1);
 
