@@ -12,7 +12,7 @@ namespace blockBreaker
         float defaultSpeed = 400;
         float speed = 400, radius;
         bool isActive = true, isPaddleBall = true;
-        public Vector2 position, direction = new Vector2(-.747f,.747f);
+        public Vector2 position, direction = new Vector2(0, -1);
 
         public Texture2D BallTexture
         {

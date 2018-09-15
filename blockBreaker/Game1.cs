@@ -166,10 +166,10 @@ namespace blockBreaker
 
                     //if (pct < 0.33f)
                     //    normal = new Vector2(-0.196f, -0.981f);
-                       
+
                     //else if (pct > 0.66f)
                     //    normal = new Vector2(0.196f, -0.981f);
-                       
+
 
                     //b.direction = Vector2.Reflect(b.direction, normal);
                     b.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
@@ -238,6 +238,8 @@ namespace blockBreaker
 
         protected void CheckCollisions()
         {
+            Ball lostBall = null;
+
             foreach (Ball ball in balls)
             {
                 // Check for paddle
@@ -252,7 +254,7 @@ namespace blockBreaker
                     // Reflect based on which part of the paddle is hit
 
                     // By default, set the normal to up
-                    Vector2 normal = -1.0f * Vector2.UnitY;
+                     Vector2 normal = -1.0f * Vector2.UnitY;
                     // ball.direction = -1.0f * Vector2.UnitY;       // Changing direction explicitly makes the ball more predictable
 
                     // Distance from the leftmost to rightmost part of the paddle
@@ -265,16 +267,42 @@ namespace blockBreaker
                     // Percent between leftmost and rightmost part of paddle
                     float pct = ballLocation / dist;
 
-                    if (pct < 0.33f)
+                    if (pct <= 0.20f) // far left
                         normal = new Vector2(-0.196f, -0.981f);
+                    else if (pct <= 0.40f && pct > 0.20f) // left
+                        normal = new Vector2(-0.098f, -0.981f);
                     //   ball.direction = new Vector2(-1, -0.981f); 
-
-                    else if (pct > 0.66f)
-                        normal = new Vector2(0.196f, -0.981f);
+                    else if (pct > 0.40f && pct <= .60f) // middle
+                        normal = new Vector2(0, -0.981f);
                     // ball.direction = new Vector2(1, -0.981f);
+                    else if (pct > .60f && pct <= .80)
+                        normal = new Vector2(0.098f, -0.981f);
+                    else
+                        normal = new Vector2(0.196f, -0.981f);
 
 
                     ball.direction = Vector2.Reflect(ball.direction, normal);
+                    int randVal = rand.Next(0, 100);
+                    if (ball.direction.Y == -1)
+                    {
+                        float randY;
+                        if (randVal > 50)
+                            randY = -.9f;
+                        else
+                            randY = -1.1f;
+
+                        ball.direction = Vector2.Reflect(new Vector2(ball.direction.X, randY), normal);
+                    }
+                    if (ball.direction.X == 0)
+                    {
+                        float randX;
+                        if (randVal > 50)
+                            randX = -.1f;
+                        else
+                            randX = .1f;
+
+                        ball.direction = Vector2.Reflect(new Vector2(randX, ball.direction.Y), normal);
+                    }
                     // No collisions between ball and paddle for 20 frames
                     ballWithPaddle = 20;
                 }
@@ -326,7 +354,6 @@ namespace blockBreaker
                     blocks.Remove(collidedBlock);
                 }
 
-
                 // Check walls
                 if (Math.Abs(ball.position.X) < ball.Radius)
                 {
@@ -345,10 +372,15 @@ namespace blockBreaker
                 }
                 else if (ball.position.Y > (graphics.PreferredBackBufferHeight + ball.Radius))
                 {
-                    SpawnBall();
+                    lostBall = ball;
+                    ball.IsActive = false;
                 }
             }
-            
+            if (lostBall != null)
+            {
+                balls.Remove(lostBall);
+                SpawnBall();
+            }
         }
 
         
