@@ -8,6 +8,8 @@ namespace blockBreaker
     class Paddle : GameObject
     {
         float speed = 500;
+        bool isLongPaddle = false;
+        float longPaddleTimer = 0f;
 
         public Paddle(Game myGame) :
             base(myGame)
@@ -27,6 +29,18 @@ namespace blockBreaker
             set { speed = value; }
         }
 
+        public float LongPaddleTimer
+        {
+            get { return longPaddleTimer; }
+            set { longPaddleTimer = value; }
+        }
+
+        public bool IsLongPaddle
+        {
+            get { return isLongPaddle; }
+            set { isLongPaddle = value; }
+        }
+
         public override void Update(float deltaTime)
         {
             float screenWidth = Game1.graphics.PreferredBackBufferWidth;
@@ -41,7 +55,21 @@ namespace blockBreaker
                 position.X += speed * deltaTime;
             }
             // Clamp paddle to valid range
-            position.X = MathHelper.Clamp(position.X, texture.Width / 2, screenWidth - texture.Width / 2); 
+            position.X = MathHelper.Clamp(position.X, texture.Width / 2, screenWidth - texture.Width / 2);
+
+            if (isLongPaddle)
+            {
+                longPaddleTimer += deltaTime;
+
+                if (longPaddleTimer > 30f)
+                {
+                    textureName = "paddle";
+                    this.LoadContent();
+                    longPaddleTimer = 0;
+                    isLongPaddle = false;
+                }  
+            }
+
             base.Update(deltaTime);
         }
 
