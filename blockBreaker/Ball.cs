@@ -6,18 +6,26 @@ using Microsoft.Xna.Framework.Input;
 
 namespace blockBreaker
 {
-    class Ball
+    class Ball : GameObject
     {
-        Texture2D ballTexture;
-        float defaultSpeed = 375;
-        float speed = 375, radius;
-        bool isActive = true, isPaddleBall = true;
-        public Vector2 position, direction = new Vector2(0, -1);
+        float defaultSpeed = 375,
+              speed = 375,
+              radius,
+              fireBallTimer = 0f;
 
-        public Texture2D BallTexture
+        bool isActive = true, isPaddleBall = true, isFireBall = false;
+        public Vector2 direction = new Vector2(0, -1);
+
+        public Ball(Game myGame) :
+            base(myGame)
         {
-            get { return ballTexture; }
-            set { ballTexture = value; }
+            textureName = "ball";
+        }
+
+        public Texture2D Texture
+        {
+            get { return texture; }
+            set { texture = value; }
         }
         public float Speed
         {
@@ -47,13 +55,36 @@ namespace blockBreaker
             set { isPaddleBall = value; }
         }
 
+        public bool IsFireBall
+        {
+            get { return isFireBall; }
+            set { isFireBall = value; }
+        }
+
+        public float FireBallTimer
+        {
+            get { return fireBallTimer; }
+            set { fireBallTimer = value; }
+        }
+
         public void Update(float deltaTime)
         {
             position += direction * speed * deltaTime;
+
+            if (isFireBall)
+            {
+                fireBallTimer += deltaTime;
+
+                if (fireBallTimer > 10f)
+                {
+                    this.textureName = "ball";
+                    this.LoadContent();
+                    fireBallTimer = 0f;
+                    isFireBall = false;
+                }
+            }
         }
 
-        public Ball(Texture2D bTexture) { ballTexture = bTexture; }
-        
     }
 }
 
