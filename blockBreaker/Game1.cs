@@ -19,8 +19,10 @@ namespace blockBreaker
 
         Paddle paddle;
 
-        SoundEffect ballHitSFX,
-                    ballBounceSFX,
+        SoundEffect blockHitSFX,
+                    paddleHitSFX,
+                    wallHitSFX,
+                    fireBallSFX,
                     powerUpSFX;
 
         int ballWithPaddle;
@@ -77,8 +79,10 @@ namespace blockBreaker
 
             SpawnBall();
 
-            ballHitSFX = Content.Load<SoundEffect>("ball_hit");
-            ballBounceSFX = Content.Load<SoundEffect>("ball_bounce");
+            blockHitSFX = Content.Load<SoundEffect>("high_beep");
+            paddleHitSFX = Content.Load<SoundEffect>("low_beep");
+            wallHitSFX = Content.Load<SoundEffect>("mid_beep");
+           // fireBallSFX = Content.Load<SoundEffect>("fire_ball_sound");
             powerUpSFX = Content.Load<SoundEffect>("powerup");
 
           //  font = Content.Load<SpriteFont>("Arial");
@@ -218,7 +222,7 @@ namespace blockBreaker
                     (ball.position.Y > (paddle.position.Y - ball.Radius - paddle.Height / 2))))
                 {
                     if (!ball.IsPaddleBall)
-                        ballBounceSFX.Play();
+                        paddleHitSFX.Play();
 
                     // Reflect based on which part of the paddle is hit
 
@@ -297,7 +301,7 @@ namespace blockBreaker
                 // Determine ball reflection
                 if (collidedBlock != null)
                 {
-                    ballHitSFX.Play();
+                    blockHitSFX.Play();
                     int randNum = rand.Next(0, 100);
 
                     if (randNum >= 80 && (powerUps.Count <= 3))  // max of 4 powerups dropped at a time
@@ -329,17 +333,17 @@ namespace blockBreaker
                 // Check walls
                 if (Math.Abs(ball.position.X) < ball.Radius)
                 {
-                    ballBounceSFX.Play();
+                    wallHitSFX.Play();
                     ball.direction.X = -1.0f * ball.direction.X;
                 }
                 else if (Math.Abs(ball.position.X - graphics.PreferredBackBufferWidth) < ball.Radius)
                 {
-                    ballBounceSFX.Play();
+                    wallHitSFX.Play();
                     ball.direction.X = -1.0f * ball.direction.X;
                 }
                 else if (Math.Abs(ball.position.Y) < ball.Radius)
                 {
-                    ballBounceSFX.Play();
+                    wallHitSFX.Play();
                     ball.direction.Y = -1.0f * ball.direction.Y;
                 }
                 else if (ball.position.Y > (graphics.PreferredBackBufferHeight + ball.Radius))
@@ -462,8 +466,6 @@ namespace blockBreaker
                     }
                     break;
             }
-           
-
         }
     }
 }
