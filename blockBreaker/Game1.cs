@@ -7,6 +7,11 @@ using System.Collections.Generic;
 
 // NOTES: Want to be able to adjust paddle width and sensetivity; Collect data (save exactly what the user is doing, and any events (like score, levels, bonuses etc.),
 //        and output to a text file). Also want to keep track of how many days or time the user is playing the game.
+
+// NOTES: Maybe have array like Level 1:[ballSpeed, paddleWdth, pUpFrequency, blockArrangement, blockDurability, backGround]
+//        Regardless of how it is implemented, this is what will be altered as the game progresses
+//        The ball speed will slowly increase, the paddle width will remain the same for the first few levels then slowly decrease,
+//        and more durable blocks will be introduced
 namespace blockBreaker
 {
     /// <summary>
