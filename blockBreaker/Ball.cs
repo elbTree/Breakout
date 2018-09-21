@@ -8,8 +8,8 @@ namespace blockBreaker
 {
     class Ball : GameObject
     {
-        float defaultSpeed = 375,
-              speed = 375,
+        float defaultSpeed = 265,
+              speed = 265,
               radius,
               fireBallTimer = 0f;
 
