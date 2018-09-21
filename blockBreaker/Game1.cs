@@ -48,7 +48,7 @@ namespace blockBreaker
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            graphics.IsFullScreen = true;
+            graphics.IsFullScreen = false;
             graphics.PreferredBackBufferWidth = screenWidth;
             graphics.PreferredBackBufferHeight = screenHeight;
         }
@@ -143,9 +143,12 @@ namespace blockBreaker
             }
 
             foreach (PowerUp p in powerUps)
-            {   
+            {
+                Rectangle paddlePos = paddle.BoundingRect;
                 if (!p.shouldRemove)
                     p.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+                if (paddlePos.Intersects(p.BoundingRect))
+                    ActivatePowerUp(p);
             }
 
             CheckCollisions();
@@ -299,7 +302,7 @@ namespace blockBreaker
                     int randNum = rand.Next(0, 120);
 
                     if (randNum > 100)
-                        //              DropPowerUp(collidedBlock.position);
+                        DropPowerUp(collidedBlock.position);
 
                         score += 10;
 
@@ -353,19 +356,23 @@ namespace blockBreaker
         
         // Currently just loads a simple rectangle level, need to create different levels using jagged arrays
         // and once all the shapes have been played through once, it will loop with a different background
-        // and a slightly increased difficulty (slightly faster ball, more durable/unbreakable blocks, lower powerup frequency)
+        // and a slightly increased difficulty (slightly faster ball, more durable/unbreakable blocks)
+        // Map ideas: triangle/level with sandy background, spaceship with space background, hexagon
         protected void CreateLevel()
         {
-            int[,] blockLayout = new int[,]{
-               {5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5},
-               {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-               {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-               {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
-               {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-               {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
-               {5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5},
-               {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-               {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+            int[,] blockLayout = new int[,] {
+               {5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5},
+               {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+               {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+               {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+               {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
+               {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
+               {5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5},
+               {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+               {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+               {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
+               {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
+               {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
             };
 
             for (int i = 0; i < blockLayout.GetLength(0); i++)
@@ -373,7 +380,7 @@ namespace blockBreaker
                 for (int j = 0; j < blockLayout.GetLength(1); j++)
                 {
                     Block b = new Block((BlockColor)blockLayout[i, j], this); 
-                    b.position = new Vector2(j * b.BlockWidth + screenWidth / 6, screenHeight / 6 + b.BlockHeight * i);
+                    b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
                     blocks.Add(b);
                 }
             }
@@ -387,59 +394,44 @@ namespace blockBreaker
             balls.Add(b);
         }
 
-        //protected void DropPowerUp(Vector2 blockPos)
-        //{
-        //    int randNum = rand.Next(0, 120);
-        //    PowerUpType pType;
-            
-
-        //    if (randNum <= 20)
-        //        pType = PowerUpType.MultiBall;
-            
-        //    else if (randNum > 20 && randNum <= 40)
-        //        pType = PowerUpType.PaddleSizeIncrease;
-            
-        //    else if (randNum > 40 && randNum <= 60)
-        //        pType = PowerUpType.Lasers;
-            
-        //    else if (randNum > 60 && randNum <= 80)
-        //        pType = PowerUpType.FireBall;
-            
-        //    else if (randNum > 80 && randNum <= 100)
-        //        pType = PowerUpType.FastBall;
-            
-        //     else
-        //        pType = PowerUpType.PaddleSizeDecrease;
-
-        //    PowerUp p = new PowerUp(pType, this);
-        //    p.position = blockPos;
-        //    p.LoadContent();
-        //    powerUps.Add(p);
-
-        //}
-
-        //private void PowerUpRetreived(Paddle paddle)
-        //{
-        //    Rectangle paddlePos = paddle.BoundingRect;
+        private void DropPowerUp(Vector2 blockPos)
+        {
+            int randNum = rand.Next(0, 80);
+            PowerUpType pType = new PowerUpType();
 
 
-        //    foreach (PowerUp p in powerUps)
-        //        if (paddlePos.Intersects(p.BoundingRect))
-        //            ActivatePowerUp(p);
-        //}
+            if (randNum <= 20)
+                pType = PowerUpType.MultiBall;
 
-        //protected void ActivatePowerUp(PowerUp p)
-        //{
-        //    p.shouldRemove = true;
-        //    powerUpSFX.Play();
+            else if (randNum > 20 && randNum <= 40)
+                pType = PowerUpType.PaddleSizeIncrease;
 
-        //    // will implement this later, it will be used to determine how to activate the powerup
-        //    //switch(p.type)
-        //    //{
+            else if (randNum > 40 && randNum <= 60)
+                pType = PowerUpType.Lasers;
 
-        //    //}
+            else if (randNum > 60 && randNum <= 80)
+                pType = PowerUpType.FireBall;
 
-        //    powerUps.Remove(p);
-        //}
+            PowerUp p = new PowerUp(pType, this);
+            p.position = blockPos;
+            p.LoadContent();
+            powerUps.Add(p);
+
+        }
+
+        protected void ActivatePowerUp(PowerUp p)
+        {
+            p.shouldRemove = true;
+            powerUpSFX.Play();      // currently activatepowerup is called in update so the sound loops
+
+            // will implement this later, it will be used to determine how to activate the powerup
+            //switch(p.type)
+            //{
+
+            //}
+
+            // need to remove powerup somewhere else
+           // powerUps.Remove(p);
+        }
     }
 }
