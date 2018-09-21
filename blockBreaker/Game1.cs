@@ -5,11 +5,8 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 
-// TODO: Add constructors for ball and paddle 
-// NOTES: Implement 'physics' into game. Add a new background. Grey blocks are unbreakable. 
-//       Maybe manually design shape of level in combination with randomly adding unbreakable blocks.
-//       Want to be able to adjust paddle width and sensetivity; Collect data (save exactly what the user is doing, and any events (like score, levels, bonuses etc.),
- //      and output to a text file). Also want to keep track of how many days or time the user is playing the game. Idea for 
+// NOTES: Want to be able to adjust paddle width and sensetivity; Collect data (save exactly what the user is doing, and any events (like score, levels, bonuses etc.),
+//        and output to a text file). Also want to keep track of how many days or time the user is playing the game.
 namespace blockBreaker
 {
     /// <summary>
@@ -28,11 +25,7 @@ namespace blockBreaker
 
         int ballWithPaddle;
 
-        // mapSize determines the number of blocks, difficulty determines the width of the paddle
-        // and the speed of the ball
-        int mapSize,
-            difficulty,
-            score = 0;
+        int score = 0;
 
         List<Block> blocks = new List<Block>();
         List<Ball> balls = new List<Ball>();
@@ -48,7 +41,7 @@ namespace blockBreaker
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            graphics.IsFullScreen = false;
+            graphics.IsFullScreen = true;
             graphics.PreferredBackBufferWidth = screenWidth;
             graphics.PreferredBackBufferHeight = screenHeight;
         }
@@ -63,8 +56,6 @@ namespace blockBreaker
         {
             // TODO: Add your initialization logic here
 
-            mapSize = 20;
-            difficulty = 1;
             rand = new Random();
             
             
@@ -145,10 +136,18 @@ namespace blockBreaker
             foreach (PowerUp p in powerUps)
             {
                 Rectangle paddlePos = paddle.BoundingRect;
+
                 if (!p.shouldRemove)
                     p.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
-                if (paddlePos.Intersects(p.BoundingRect))
+
+                if (paddlePos.Intersects(p.BoundingRect) && (!p.isActive))
                     ActivatePowerUp(p);
+            }
+
+            for(int i = 0; i < powerUps.Count; i++)
+            {
+                if (powerUps[i].isActive)
+                    powerUps.RemoveAt(i);
             }
 
             CheckCollisions();
@@ -175,7 +174,7 @@ namespace blockBreaker
             foreach (Ball b in balls)
             {
                 if (b.IsActive)
-                    spriteBatch.Draw(b.BallTexture, b.position, Color.White);
+                    spriteBatch.Draw(b.Texture, b.position, Color.White);
             }
             foreach (PowerUp p in powerUps)
             {
@@ -299,29 +298,32 @@ namespace blockBreaker
                 if (collidedBlock != null)
                 {
                     ballHitSFX.Play();
-                    int randNum = rand.Next(0, 120);
+                    int randNum = rand.Next(0, 100);
 
-                    if (randNum > 100)
+                    if (randNum >= 80 && (powerUps.Count <= 3))  // max of 4 powerups dropped at a time
                         DropPowerUp(collidedBlock.position);
 
                         score += 10;
 
                     // Assume that if our Y is close to the top or bottom of the block,
                     // we're colliding with the top or bottom
-                    if ((ball.position.Y <
-                        (collidedBlock.position.Y - collidedBlock.BlockHeight / 2)) ||
-                        (ball.position.Y >
-                        (collidedBlock.position.Y + collidedBlock.BlockHeight / 2)))
+                    if (!ball.IsFireBall)
                     {
-                        ball.direction.Y = -1.0f * ball.direction.Y;
+                        if ((ball.position.Y <
+                            (collidedBlock.position.Y - collidedBlock.BlockHeight / 2)) ||
+                            (ball.position.Y >
+                            (collidedBlock.position.Y + collidedBlock.BlockHeight / 2)))
+                        {
+                            ball.direction.Y = -1.0f * ball.direction.Y;
+                        }
+                        else // otherwise, we have to be colliding from the sides
+                        {
+                            ball.direction.X = -1.0f * ball.direction.X;
+                        }
                     }
-                    else // otherwise, we have to be colliding from the sides
-                    {
-                        ball.direction.X = -1.0f * ball.direction.X;
-                    }
-
                     // Now remove this block from the list
-                    blocks.Remove(collidedBlock);
+                    if (collidedBlock.Durability < 1)
+                        blocks.Remove(collidedBlock);
                 }
 
                 // Check walls
@@ -349,7 +351,9 @@ namespace blockBreaker
             if (lostBall != null)
             {
                 balls.Remove(lostBall);
-                SpawnBall();
+
+                if (balls.Count == 0)
+                    SpawnBall();
             }
         }
 
@@ -371,8 +375,6 @@ namespace blockBreaker
                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
                {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
-               {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-               {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
             };
 
             for (int i = 0; i < blockLayout.GetLength(0); i++)
@@ -388,9 +390,17 @@ namespace blockBreaker
 
         private void SpawnBall()
         {
-            Ball b = new Ball(Content.Load<Texture2D>("ball"));
-            b.Radius = b.BallTexture.Width / 2;
-            b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 2.2f);
+            Ball b = new Ball(this);
+            b.LoadContent();
+            b.Radius = b.Texture.Width / 2;
+
+            if (balls.Count == 0)
+                b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 2.2f);
+            else
+            {
+                b.IsPaddleBall = false;
+                b.position = new Vector2(balls[0].position.X, balls[0].position.Y);
+            }  
             balls.Add(b);
         }
 
@@ -403,13 +413,10 @@ namespace blockBreaker
             if (randNum <= 20)
                 pType = PowerUpType.MultiBall;
 
-            else if (randNum > 20 && randNum <= 40)
+            else if (randNum > 20 && randNum <= 60)
                 pType = PowerUpType.PaddleSizeIncrease;
 
-            else if (randNum > 40 && randNum <= 60)
-                pType = PowerUpType.Lasers;
-
-            else if (randNum > 60 && randNum <= 80)
+            else if (randNum > 0)
                 pType = PowerUpType.FireBall;
 
             PowerUp p = new PowerUp(pType, this);
@@ -419,19 +426,44 @@ namespace blockBreaker
 
         }
 
-        protected void ActivatePowerUp(PowerUp p)
+        private void ActivatePowerUp(PowerUp p, params Ball[] bList)
         {
             p.shouldRemove = true;
-            powerUpSFX.Play();      // currently activatepowerup is called in update so the sound loops
+            p.isActive = true;
+            powerUpSFX.Play();
+
 
             // will implement this later, it will be used to determine how to activate the powerup
-            //switch(p.type)
-            //{
+            switch (p.type)
+            {
+                case PowerUpType.MultiBall:
+                    if (balls.Count <= 5)   // max of 6 balls
+                    {
+                        SpawnBall();
+                        SpawnBall();
+                    }
+                    break;
+                case PowerUpType.PaddleSizeIncrease:
+                    paddle.LongPaddleTimer = 0f;
 
-            //}
+                    if (!paddle.IsLongPaddle)
+                    {
+                        paddle.IsLongPaddle = true;
+                        paddle.Texture = Content.Load<Texture2D>("long_paddle");
+                    }
+                    break;
+                case PowerUpType.FireBall:
+                    balls[0].FireBallTimer = 0f;
 
-            // need to remove powerup somewhere else
-           // powerUps.Remove(p);
+                    if (!balls[0].IsFireBall)
+                    {
+                        balls[0].Texture = Content.Load<Texture2D>("fireball");
+                        balls[0].IsFireBall = true;
+                    }
+                    break;
+            }
+           
+
         }
     }
 }
