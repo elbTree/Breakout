@@ -385,12 +385,6 @@
 /processorParam:TextureFormat=Color
 /build:paddle.png
 
-#begin ball_hit.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:ball_hit.wav
-
 #begin powerup.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
@@ -457,12 +451,6 @@
 /processorParam:TextureFormat=Color
 /build:wide_paddle_powerUp.png
 
-#begin ball_bounce.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:ball_bounce.wav
-
 #begin fireball.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -510,4 +498,22 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:long_paddle.png
+
+#begin high_beep.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:high_beep.wav
+
+#begin low_beep.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:low_beep.wav
+
+#begin mid_beep.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:mid_beep.wav
 
