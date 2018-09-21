@@ -37,6 +37,7 @@ namespace blockBreaker
         List<Block> blocks = new List<Block>();
         List<Ball> balls = new List<Ball>();
         List<PowerUp> powerUps = new List<PowerUp>();
+        Texture2D skyBG;
         Random rand;
         
         SpriteFont font;
@@ -84,13 +85,14 @@ namespace blockBreaker
 
             SpawnBall();
 
+            skyBG = Content.Load<Texture2D>("sky_background");
             blockHitSFX = Content.Load<SoundEffect>("high_beep");
             paddleHitSFX = Content.Load<SoundEffect>("low_beep");
             wallHitSFX = Content.Load<SoundEffect>("mid_beep");
            // fireBallSFX = Content.Load<SoundEffect>("fire_ball_sound");
             powerUpSFX = Content.Load<SoundEffect>("powerup");
 
-          //  font = Content.Load<SpriteFont>("Arial");
+            font = Content.Load<SpriteFont>("Score");
 
             CreateLevel();
 
@@ -150,7 +152,10 @@ namespace blockBreaker
                     p.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
                 if (paddlePos.Intersects(p.BoundingRect) && (!p.isActive))
+                {
                     ActivatePowerUp(p);
+                    score += 15;
+                }
             }
 
             for(int i = 0; i < powerUps.Count; i++)
@@ -174,6 +179,8 @@ namespace blockBreaker
             // TODO: Add your drawing code here
             spriteBatch.Begin();
 
+            spriteBatch.Draw(skyBG, new Vector2(0, 0), Color.White);
+
             foreach (Block b in blocks)
                 spriteBatch.Draw(b.Texture, new Rectangle((int)b.position.X,(int)b.position.Y, (int)b.BlockWidth, (int)b.BlockHeight), Color.White);
 
@@ -190,8 +197,8 @@ namespace blockBreaker
                 if (!p.shouldRemove)
                     p.Draw(spriteBatch);
             }
-            //spriteBatch.DrawString(font, String.Format("Score: {0:#,###0}", score),
-            //           new Vector2(40, 50), Color.White);
+            spriteBatch.DrawString(font, String.Format("Score: {0:#,###0}", score),
+                       new Vector2(40, 50), Color.White);
 
             spriteBatch.End();
             base.Draw(gameTime);
@@ -265,9 +272,9 @@ namespace blockBreaker
                     if (ball.direction.Y == 0)
                     {
                         if (randVal > 50)
-                            ball.direction.Y = -0.2f;
+                            ball.direction.Y = -0.4f;
                         else
-                            ball.direction.Y = 0.2f;
+                            ball.direction.Y = 0.4f;
                         
                     }
                     // prevent ball from going straight up/down with no change in the X direction
@@ -312,7 +319,7 @@ namespace blockBreaker
                     if (randNum >= 80 && (powerUps.Count <= 3))  // max of 4 powerups dropped at a time
                         DropPowerUp(collidedBlock.position);
 
-                        score += 10;
+                        score += 20;
 
                     // Assume that if our Y is close to the top or bottom of the block,
                     // we're colliding with the top or bottom
@@ -361,6 +368,11 @@ namespace blockBreaker
             {
                 balls.Remove(lostBall);
 
+                if (score > 50)
+                {
+                    score -= 5;
+                }
+
                 if (balls.Count == 0)
                     SpawnBall();
             }
@@ -380,11 +392,7 @@ namespace blockBreaker
                {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
                {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
                {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
-               {5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5},
-               {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-               {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-               {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
-            };
+             };
 
             for (int i = 0; i < blockLayout.GetLength(0); i++)
             {
@@ -399,17 +407,28 @@ namespace blockBreaker
 
         private void SpawnBall()
         {
+            int multiBallCount = 0;
             Ball b = new Ball(this);
             b.LoadContent();
             b.Radius = b.Texture.Width / 2;
 
             if (balls.Count == 0)
+            {
+                b.IsPaddleBall = true;
                 b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 2.2f);
+
+                multiBallCount = 0;
+            }
             else
             {
                 b.IsPaddleBall = false;
                 b.position = new Vector2(balls[0].position.X, balls[0].position.Y);
+                if (multiBallCount < 2)
+                    b.direction = new Vector2(balls[0].direction.X + .2f, balls[0].direction.Y); // right now only this is executing because multiBallCount is always initialized to 0
+                else
+                    b.direction = new Vector2(balls[0].direction.X - .2f, balls[0].direction.Y);
             }  
+              
             balls.Add(b);
         }
 
@@ -425,7 +444,7 @@ namespace blockBreaker
             else if (randNum > 20 && randNum <= 60)
                 pType = PowerUpType.PaddleSizeIncrease;
 
-            else if (randNum > 0)
+            else if (randNum > 60)
                 pType = PowerUpType.FireBall;
 
             PowerUp p = new PowerUp(pType, this);
@@ -446,7 +465,7 @@ namespace blockBreaker
             switch (p.type)
             {
                 case PowerUpType.MultiBall:
-                    if (balls.Count <= 5)   // max of 6 balls
+                    if (balls.Count <= 2)   // max of 3 balls
                     {
                         SpawnBall();
                         SpawnBall();
