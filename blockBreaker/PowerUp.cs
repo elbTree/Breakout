@@ -21,7 +21,8 @@ namespace blockBreaker
     {
         public PowerUpType type;
         public float speed = 200;
-        public bool shouldRemove = false;
+        public bool shouldRemove = false,
+                    isActive = false;
         public int screenHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
 
         public PowerUp(PowerUpType myType, Game myGame) :
@@ -36,9 +37,6 @@ namespace blockBreaker
                     break;
                 case (PowerUpType.PaddleSizeIncrease):
                     textureName = "wide_paddle_powerUp";
-                    break;
-                case (PowerUpType.Lasers):
-                    textureName = "laser_powerUp";
                     break;
                 case (PowerUpType.FireBall):
                     textureName = "fireball_powerUp";
