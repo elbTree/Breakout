@@ -21,7 +21,7 @@ namespace blockBreaker
 
         // durability determines how many hits to break the block
         // status indicates whether the block is fractured/shattered
-        private int durability, status;
+        private int durability = 0, status;
         public int BlockWidth = 50;
         public int BlockHeight = 20;
         public Vector2 position;
