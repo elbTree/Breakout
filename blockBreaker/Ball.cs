@@ -13,7 +13,7 @@ namespace blockBreaker
               radius,
               fireBallTimer = 0f;
 
-        bool isActive = true, isPaddleBall = true, isFireBall = false;
+        bool isActive = true, isPaddleBall = false, isFireBall = false;
         public Vector2 direction = new Vector2(0, -1);
 
         public Ball(Game myGame) :
