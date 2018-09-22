@@ -8,8 +8,8 @@ namespace blockBreaker
 {
     class Ball : GameObject
     {
-        float defaultSpeed = 265,
-              speed = 265,
+        float defaultSpeed = 200,
+              speed = 200,
               radius,
               fireBallTimer = 0f;
 
@@ -67,7 +67,7 @@ namespace blockBreaker
             set { fireBallTimer = value; }
         }
 
-        public void Update(float deltaTime)
+        override public void Update(float deltaTime)
         {
             position += direction * speed * deltaTime;
 
