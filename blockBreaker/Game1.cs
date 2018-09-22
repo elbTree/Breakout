@@ -12,6 +12,12 @@ using System.Collections.Generic;
 //        Regardless of how it is implemented, this is what will be altered as the game progresses
 //        The ball speed will slowly increase, the paddle width will remain the same for the first few levels then slowly decrease,
 //        and more durable blocks will be introduced
+
+// CURRENT ISSUES: 
+//                 Ball slows down mid - late game. 
+//                 POSSIBLE SOLUTION: This might be caused by the multiball powerup or the collision code. Look into optimizing code.
+//                 If more than one ball hits the paddle at the same time, one or both balls can go through the paddle, sometimes getting stuck 'in' the paddle temporarily. 
+//                 POSSIBLE SOLUTION: Look into optimizing (maybe not updating fast enough). 
 namespace blockBreaker
 {
     /// <summary>
@@ -89,7 +95,7 @@ namespace blockBreaker
             blockHitSFX = Content.Load<SoundEffect>("high_beep");
             paddleHitSFX = Content.Load<SoundEffect>("low_beep");
             wallHitSFX = Content.Load<SoundEffect>("mid_beep");
-           // fireBallSFX = Content.Load<SoundEffect>("fire_ball_sound");
+            fireBallSFX = Content.Load<SoundEffect>("fireball_sound");
             powerUpSFX = Content.Load<SoundEffect>("powerup");
 
             font = Content.Load<SpriteFont>("Score");
@@ -133,15 +139,12 @@ namespace blockBreaker
             {
                 if (b.IsActive && b.IsPaddleBall)
                 {
-                    b.Speed = paddle.Speed;
-                    b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 2.2f);
+                    b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 2.4f);
                     b.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
                 }
                 else
-                {
-                    b.Speed = b.DefaultSpeed;
                     b.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
-                }
+                
             }
 
             foreach (PowerUp p in powerUps)
@@ -158,7 +161,7 @@ namespace blockBreaker
                 }
             }
 
-            for(int i = 0; i < powerUps.Count; i++)
+            for (int i = 0; i < powerUps.Count; i++)
             {
                 if (powerUps[i].isActive)
                     powerUps.RemoveAt(i);
@@ -313,7 +316,10 @@ namespace blockBreaker
                 // Determine ball reflection
                 if (collidedBlock != null)
                 {
-                    blockHitSFX.Play();
+                    if (!ball.IsFireBall)
+                        blockHitSFX.Play();
+                    else
+                        fireBallSFX.Play();
                     int randNum = rand.Next(0, 100);
 
                     if (randNum >= 80 && (powerUps.Count <= 3))  // max of 4 powerups dropped at a time
@@ -415,7 +421,7 @@ namespace blockBreaker
             if (balls.Count == 0)
             {
                 b.IsPaddleBall = true;
-                b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 2.2f);
+                b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 2.4f);
 
                 multiBallCount = 0;
             }
