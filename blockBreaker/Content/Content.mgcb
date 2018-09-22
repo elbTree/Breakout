@@ -536,3 +536,9 @@
 /processorParam:TextureFormat=Color
 /build:sky_background.png
 
+#begin fireball_sound.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:fireball_sound.wav
+
