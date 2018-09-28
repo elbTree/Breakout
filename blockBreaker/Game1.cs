@@ -8,7 +8,7 @@ using System.Collections.Generic;
 // NOTES: Want to be able to adjust paddle width and sensetivity; Collect data (save exactly what the user is doing, and any events (like score, levels, bonuses etc.),
 //        and output to a text file). Also want to keep track of how many days or time the user is playing the game.
 
-// NOTES: Maybe have array like Level 1:[ballSpeed, paddleWdth, pUpFrequency, blockArrangement, blockDurability, backGround]
+// NOTES: Maybe have array like Level 1:[ballSpeed, paddleWdth, pUpFrequency, blockArrangement, blockDurability, background]
 //        Regardless of how it is implemented, this is what will be altered as the game progresses
 //        The ball speed will slowly increase, the paddle width will remain the same for the first few levels then slowly decrease,
 //        and more durable blocks will be introduced
@@ -39,6 +39,9 @@ namespace blockBreaker
         int ballWithPaddle;
 
         int score = 0;
+        int level = 0;
+        bool startOfLevel = true;
+        float newLevelCounter = 0f;
 
         List<Block> blocks = new List<Block>();
         List<Ball> balls = new List<Ball>();
@@ -51,6 +54,9 @@ namespace blockBreaker
         int screenWidth = 1366;
         int screenHeight = 768;
 
+
+
+
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -59,6 +65,8 @@ namespace blockBreaker
             graphics.PreferredBackBufferWidth = screenWidth;
             graphics.PreferredBackBufferHeight = screenHeight;
         }
+
+
 
         /// <summary>
         /// Allows the game to perform any initialization it needs to before starting to run.
@@ -75,6 +83,8 @@ namespace blockBreaker
             
             base.Initialize();
         }
+
+
 
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
@@ -100,10 +110,10 @@ namespace blockBreaker
 
             font = Content.Load<SpriteFont>("Score");
 
-            CreateLevel();
-
             // TODO: use this.Content to load your game content here
         }
+
+
 
         /// <summary>
         /// UnloadContent will be called once per game and is the place to unload
@@ -116,6 +126,8 @@ namespace blockBreaker
             // TODO: Unload any non ContentManager content here
         }
 
+
+
         /// <summary>
         /// Allows the game to run logic such as updating the world,
         /// checking for collisions, gathering input, and playing audio.
@@ -124,16 +136,21 @@ namespace blockBreaker
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
+               Exit();
             if (Keyboard.GetState().IsKeyDown(Keys.Space))
-            {
-                foreach (Ball b in balls)
-                    b.IsPaddleBall = false;
-            }
+              {
+                  foreach (Ball b in balls)
+                      b.IsPaddleBall = false;
+              }
 
-
-            // TODO: Add your update logic here
-            paddle.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+            
+            // keep track of how long the "Level X" string is on the screen, disable paddle until it's gone
+            newLevelCounter += 0.05f;
+            if (newLevelCounter > 5f)
+                startOfLevel = false;
+                
+            if (!startOfLevel)
+                paddle.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
             foreach (Ball b in balls)
             {
@@ -171,6 +188,8 @@ namespace blockBreaker
             base.Update(gameTime);
         }
 
+
+
         /// <summary>
         /// This is called when the game should draw itself.
         /// </summary>
@@ -179,7 +198,7 @@ namespace blockBreaker
         {
             
             GraphicsDevice.Clear(Color.CornflowerBlue);
-            // TODO: Add your drawing code here
+
             spriteBatch.Begin();
 
             spriteBatch.Draw(skyBG, new Vector2(0, 0), Color.White);
@@ -201,11 +220,19 @@ namespace blockBreaker
                     p.Draw(spriteBatch);
             }
             spriteBatch.DrawString(font, String.Format("Score: {0:#,###0}", score),
-                       new Vector2(40, 50), Color.White);
+                                   new Vector2(40, 50), Color.White);
 
+            if (startOfLevel)
+                spriteBatch.DrawString(font, String.Format("Level {0:#0}", level),
+                                       new Vector2(screenWidth / 2.5f, screenHeight / 12), Color.White, 0, Vector2.Zero, 2, SpriteEffects.None, 0);
+        
+                
             spriteBatch.End();
             base.Draw(gameTime);
         }
+
+
+
 
         private bool intersects(double circle_x, double circle_y, double circle_r, double rect_x, double rect_y, double rect_width, double rect_height)
         {
@@ -222,6 +249,9 @@ namespace blockBreaker
 
             return (cornerDistance_sq <= Math.Pow(circle_r, 2));
         }
+
+
+
 
         protected void CheckCollisions()
         {
@@ -303,6 +333,7 @@ namespace blockBreaker
                 // Check for block collisions
                 Block collidedBlock = null;
 
+                
                 foreach (Block b in blocks)
                 {
                     if (intersects(ball.position.X, ball.position.Y, ball.Radius, b.position.X + b.BlockWidth / 3, b.position.Y, b.BlockWidth, b.BlockHeight))
@@ -348,6 +379,13 @@ namespace blockBreaker
                         blocks.Remove(collidedBlock);
                 }
 
+                // load next level once all the blocks are destroyed
+                if (blocks.Count == 0)
+                {
+                    ClearLevel();
+                    CreateLevel();
+                    break;
+                }
                 // Check walls
                 if (Math.Abs(ball.position.X) < ball.Radius)
                 {
@@ -370,6 +408,7 @@ namespace blockBreaker
                     ball.IsActive = false;
                 }
             }
+
             if (lostBall != null)
             {
                 balls.Remove(lostBall);
@@ -384,14 +423,36 @@ namespace blockBreaker
             }
         }
 
+
+        protected void ClearLevel()
+        {
+            for (int i = 0; i < powerUps.Count; i++)
+                powerUps.RemoveAt(i);
+
+            for (int i = 0; i < balls.Count; i++)
+                balls.RemoveAt(i);
+
+            for (int i = 0; i < blocks.Count; i++) // not necessary, but added this to maybe add the option of skipping levels
+                blocks.RemoveAt(i);
+
+            paddle = new Paddle(this);
+            paddle.LoadContent();
+            paddle.position = new Vector2(screenWidth / 2, screenHeight - paddle.Height * 2);
+
+            SpawnBall();
+        }
+
+
         
-        // Currently just loads a simple rectangle level, need to create different levels using jagged arrays
-        // and once all the shapes have been played through once, it will loop with a different background
-        // and a slightly increased difficulty (slightly faster ball, more durable/unbreakable blocks)
-        // Map ideas: triangle/level with sandy background, spaceship with space background, hexagon
         protected void CreateLevel()
         {
-            int[,] blockLayout = new int[,] {
+            startOfLevel = true;
+            newLevelCounter = 0;
+            level++;
+
+           
+
+            int[,] level1 = new int[,] {
                {5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5},
                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
@@ -400,16 +461,89 @@ namespace blockBreaker
                {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
              };
 
-            for (int i = 0; i < blockLayout.GetLength(0); i++)
+
+            // Temporary level shapes
+
+            int[][] level2 = new int[11][];
+
+            level2[0] = new int[] { 0, 1, 2 };
+            level2[1] = new int[] { 0, 1, 2, 4, 3 };
+            level2[2] = new int[] { 0, 1, 2, 4, 3, 0, 1 };
+            level2[3] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4 };
+            level2[4] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4, 1, 3 };
+            level2[5] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4, 1, 3, 4, 1};
+            level2[6] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4, 1, 3 };
+            level2[7] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4 };
+            level2[8] = new int[] { 0, 1, 2, 4, 3, 0, 1 };
+            level2[9] = new int[] { 0, 1, 2, 4, 3 };
+            level2[10] = new int[] { 0, 1, 2 };
+
+
+            int[][] level3 = new int[15][];
+
+            level3[0] = new int[] { 0, 1, 2 };
+            level3[1] = new int[] { 0, 1, 2, 4, 3 };
+            level3[2] = new int[] { 0, 1, 2, 4, 3, 0, 1 };
+            level3[3] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4 };
+            level3[4] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4, 1, 3 };
+            level3[5] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4, 1, 3, 4, 1 };
+            level3[6] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4, 1, 3 };
+            level3[7] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4 };
+            level3[8] = new int[] { 0, 1, 2, 4, 3, 0, 1 };
+            level3[9] = new int[] { 0, 1, 2, 4, 3 };
+            level3[10] = new int[] { 0, 1, 2 };
+            level3[11] = new int[] { 0, 1, 2, 4, 3 };
+            level3[12] = new int[] { 0, 1, 2, 4, 3, 0, 1 };
+            level3[13] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4 };
+            level3[14] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4, 1, 3 };
+
+
+
+
+            if (level == 1)
             {
-                for (int j = 0; j < blockLayout.GetLength(1); j++)
+                for (int i = 0; i < level1.GetLength(0); i++)
                 {
-                    Block b = new Block((BlockColor)blockLayout[i, j], this); 
-                    b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
-                    blocks.Add(b);
+                    for (int j = 0; j < level1.GetLength(1); j++)
+                    {
+                        Block b = new Block((BlockColor)level1[i, j], this);
+                        b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
+                        blocks.Add(b);
+                    }
                 }
             }
+
+            else if (level == 2)
+            {
+                for (int i = 0; i < level2.Length; i++)
+                {
+                    for (int j = 0; j < level2[i].Length; j++)
+                    {
+                        Block b = new Block((BlockColor)level2[i][j], this);
+                        b.position = new Vector2(j * b.BlockWidth + screenWidth / 6, screenHeight / 6 + b.BlockHeight * i);
+                        blocks.Add(b);
+                    }
+                }
+            }
+
+            else if (level == 3)
+            {
+                for (int i = 0; i < level3.Length; i++)
+                {
+                    for (int j = 0; j < level3[i].Length; j++)
+                    {
+                        Block b = new Block((BlockColor)level3[i][j], this);
+                        b.position = new Vector2(j * b.BlockWidth + screenWidth / 6, screenHeight / 6 + b.BlockHeight * i);
+                        blocks.Add(b);
+                    }
+                }
+            }
+
+           
         }
+
+
+
 
         private void SpawnBall()
         {
@@ -417,6 +551,11 @@ namespace blockBreaker
             Ball b = new Ball(this);
             b.LoadContent();
             b.Radius = b.Texture.Width / 2;
+
+            // level = 10; adjust to test ball speed at different levels
+
+            for (int i = 1; i < level; i++) // ball speed increased by 5 for every level
+                b.DefaultSpeed += 10;
 
             if (balls.Count == 0)
             {
@@ -437,6 +576,9 @@ namespace blockBreaker
               
             balls.Add(b);
         }
+
+
+
 
         private void DropPowerUp(Vector2 blockPos)
         {
@@ -460,6 +602,8 @@ namespace blockBreaker
 
         }
 
+
+
         private void ActivatePowerUp(PowerUp p, params Ball[] bList)
         {
             p.shouldRemove = true;
@@ -467,7 +611,6 @@ namespace blockBreaker
             powerUpSFX.Play();
 
 
-            // will implement this later, it will be used to determine how to activate the powerup
             switch (p.type)
             {
                 case PowerUpType.MultiBall:
