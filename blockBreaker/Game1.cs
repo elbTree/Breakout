@@ -18,6 +18,11 @@ using System.Collections.Generic;
 //                 POSSIBLE SOLUTION: This might be caused by the multiball powerup or the collision code. Look into optimizing code.
 //                 If more than one ball hits the paddle at the same time, one or both balls can go through the paddle, sometimes getting stuck 'in' the paddle temporarily. 
 //                 POSSIBLE SOLUTION: Look into optimizing (maybe not updating fast enough). 
+
+// NOTE: Ball speed up is caused by altering direction in collision code (changing Y/X direction) Need to change direction without
+//       affecting speed
+// For multiball issue (ball going through paddle) when spawning ball, check if ball.Count > 1, if true, slow speed down (for a few frames), also maybe add ball.Speed = blah in update
+// method that does it every 2 seconds or w/e, that way the multiball will separate, and could solve the problem stated above too
 namespace blockBreaker
 {
     /// <summary>
@@ -61,7 +66,7 @@ namespace blockBreaker
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            graphics.IsFullScreen = true;
+            graphics.IsFullScreen = false;
             graphics.PreferredBackBufferWidth = screenWidth;
             graphics.PreferredBackBufferHeight = screenHeight;
         }
@@ -299,17 +304,12 @@ namespace blockBreaker
                         normal = new Vector2(0.196f, -0.981f);
 
                     
+                    ball.direction = Vector2.Reflect(ball.direction, normal);
+
                     int randVal = rand.Next(0, 100);
+
                     
-                    // prevent ball from bouncing from wall to wall with no change in the Y direction
-                    if (ball.direction.Y == 0)
-                    {
-                        if (randVal > 50)
-                            ball.direction.Y = -0.4f;
-                        else
-                            ball.direction.Y = 0.4f;
-                        
-                    }
+
                     // prevent ball from going straight up/down with no change in the X direction
                     if (ball.direction.X == 0)
                     {
@@ -318,8 +318,6 @@ namespace blockBreaker
                         else
                             ball.direction.X = .1f;
                     }
-
-                    ball.direction = Vector2.Reflect(ball.direction, normal);
 
                     // No collisions between ball and paddle for 20 frames
                     ballWithPaddle = 20;
@@ -384,7 +382,7 @@ namespace blockBreaker
                 {
                     ClearLevel();
                     CreateLevel();
-                    break;
+                    break;          // Note to self: break is so you can modify objects in the foreach
                 }
                 // Check walls
                 if (Math.Abs(ball.position.X) < ball.Radius)
@@ -407,6 +405,13 @@ namespace blockBreaker
                     lostBall = ball;
                     ball.IsActive = false;
                 }
+
+                // prevent ball from bouncing from wall to wall with no/little change in the Y direction
+                if (ball.direction.Y >= -0.4f && ball.direction.Y <= 0)
+                    ball.direction.Y = -0.8f;
+
+                else if (ball.direction.Y >= 0 && ball.direction.Y <= 0.4f)
+                    ball.direction.Y = 0.8f;
             }
 
             if (lostBall != null)
