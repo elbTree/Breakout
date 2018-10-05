@@ -8,7 +8,8 @@ namespace blockBreaker
 {
     class Ball : GameObject
     {
-        float defaultSpeed = 200,
+        const float DefaultSpeed = 200;
+        float speed = 200,
               radius,
               fireBallTimer = 0f;
 
@@ -26,10 +27,10 @@ namespace blockBreaker
             get { return texture; }
             set { texture = value; }
         }
-         public float DefaultSpeed
+         public float Speed
         {
-            get { return defaultSpeed; }
-            set { defaultSpeed = value; }
+            get { return speed; }
+            set { speed = value; }
         }
         public float Radius
         {
@@ -61,9 +62,9 @@ namespace blockBreaker
             set { fireBallTimer = value; }
         }
 
-        override public void Update(float deltaTime)
+        public override void Update(float deltaTime)
         {
-            position += direction * defaultSpeed * deltaTime;
+            position += direction * speed * deltaTime;
 
             if (isFireBall)
             {
