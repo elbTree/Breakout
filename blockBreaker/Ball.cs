@@ -11,9 +11,9 @@ namespace blockBreaker
         const float DefaultSpeed = 200;
         float speed = 200,
               radius,
-              fireBallTimer = 0f;
+              fireBallTimer = 0f, multiBallTimer = 0f;
 
-        bool isActive = true, isPaddleBall = false, isFireBall = false;
+        bool isActive = true, isPaddleBall = false, isFireBall = false, isMultiBall = false;
         public Vector2 direction = new Vector2(0, -1);
 
         public Ball(Game myGame) :
@@ -56,6 +56,12 @@ namespace blockBreaker
             set { isFireBall = value; }
         }
 
+        public bool IsMultiBall
+        {
+            get { return isMultiBall; }
+            set { isMultiBall = value; }
+        }
+
         public float FireBallTimer
         {
             get { return fireBallTimer; }
@@ -78,6 +84,14 @@ namespace blockBreaker
                     isFireBall = false;
                 }
             }
+            if (isMultiBall)
+            {
+                multiBallTimer += deltaTime;
+
+                if (multiBallTimer > 5f)
+                    speed = DefaultSpeed;
+            }
+
         }
 
     }
