@@ -14,15 +14,14 @@ using System.Collections.Generic;
 //        and more durable blocks will be introduced
 
 // CURRENT ISSUES: 
-//                 Ball slows down mid - late game. 
-//                 POSSIBLE SOLUTION: This might be caused by the multiball powerup or the collision code. Look into optimizing code.
-//                 If more than one ball hits the paddle at the same time, one or both balls can go through the paddle, sometimes getting stuck 'in' the paddle temporarily. 
-//                 POSSIBLE SOLUTION: Look into optimizing (maybe not updating fast enough). 
+//                If more than one ball hits the paddle at the same time, one or both balls can go through the paddle, sometimes getting stuck 'in' the paddle temporarily. 
+//                Need to actually remove powerups from list once collected or off the screen, right now just setting shouldRemove to true
 
 // NOTE: Ball speed up is caused by altering direction in collision code (changing Y/X direction) Need to change direction without
 //       affecting speed
-// For multiball issue (ball going through paddle) when spawning ball, check if ball.Count > 1, if true, slow speed down (for a few frames), also maybe add ball.Speed = blah in update
-// method that does it every 2 seconds or w/e, that way the multiball will separate, and could solve the problem stated above too
+// Multiball and powerups SOLUTION
+// For multiball issue (ball going through paddle) right now just made the multiballs slower to avoid them hitting the paddle at the same time (which would cause it to go through the paddle)
+// need to add a boolean and counter in update method to set balls back to DefaultSpeed after a couple of seconds 
 namespace blockBreaker
 {
     /// <summary>
@@ -47,6 +46,7 @@ namespace blockBreaker
         int level = 0;
         bool startOfLevel = true;
         float newLevelCounter = 0f;
+        float powerUpChance= 20; // 20% chance of dropping a powerup
 
         List<Block> blocks = new List<Block>();
         List<Ball> balls = new List<Ball>();
@@ -142,7 +142,7 @@ namespace blockBreaker
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                Exit();
-            if (Keyboard.GetState().IsKeyDown(Keys.Space))
+            if (Keyboard.GetState().IsKeyDown(Keys.Space) && !startOfLevel)
               {
                   foreach (Ball b in balls)
                       b.IsPaddleBall = false;
@@ -151,6 +151,7 @@ namespace blockBreaker
             
             // keep track of how long the "Level X" string is on the screen, disable paddle until it's gone
             newLevelCounter += 0.05f;
+
             if (newLevelCounter > 5f)
                 startOfLevel = false;
                 
@@ -223,7 +224,9 @@ namespace blockBreaker
             {
                 if (!p.shouldRemove)
                     p.Draw(spriteBatch);
+                
             }
+
             spriteBatch.DrawString(font, String.Format("Score: {0:#,###0}", score),
                                    new Vector2(40, 50), Color.White);
 
@@ -305,19 +308,7 @@ namespace blockBreaker
 
                     
                     ball.direction = Vector2.Reflect(ball.direction, normal);
-
-                    int randVal = rand.Next(0, 100);
-
                     
-
-                    // prevent ball from going straight up/down with no change in the X direction
-                    if (ball.direction.X == 0)
-                    {
-                        if (randVal > 50)
-                            ball.direction.X = -.1f;
-                        else
-                            ball.direction.X = .1f;
-                    }
 
                     // No collisions between ball and paddle for 20 frames
                     ballWithPaddle = 20;
@@ -349,9 +340,10 @@ namespace blockBreaker
                         blockHitSFX.Play();
                     else
                         fireBallSFX.Play();
+
                     int randNum = rand.Next(0, 100);
 
-                    if (randNum >= 80 && (powerUps.Count <= 3))  // max of 4 powerups dropped at a time
+                    if (randNum <= powerUpChance && (powerUps.Count <= 3))  // max of 4 powerups dropped at a time
                         DropPowerUp(collidedBlock.position);
 
                         score += 20;
@@ -406,12 +398,24 @@ namespace blockBreaker
                     ball.IsActive = false;
                 }
 
+                int randVal = rand.Next(0, 100);
+
                 // prevent ball from bouncing from wall to wall with no/little change in the Y direction
                 if (ball.direction.Y >= -0.4f && ball.direction.Y <= 0)
                     ball.direction.Y = -0.8f;
 
                 else if (ball.direction.Y >= 0 && ball.direction.Y <= 0.4f)
                     ball.direction.Y = 0.8f;
+
+                // prevent ball from going straight up/down with no change in the X direction
+                if (ball.direction.X == 0)
+                {
+                    if (randVal > 50)
+                        ball.direction.X = -.1f;
+                    else
+                        ball.direction.X = .1f;
+                }
+
             }
 
             if (lostBall != null)
@@ -552,7 +556,6 @@ namespace blockBreaker
 
         private void SpawnBall()
         {
-            int multiBallCount = 0;
             Ball b = new Ball(this);
             b.LoadContent();
             b.Radius = b.Texture.Width / 2;
@@ -560,23 +563,29 @@ namespace blockBreaker
             // level = 10; adjust to test ball speed at different levels
 
             for (int i = 1; i < level; i++) // ball speed increased by 5 for every level
-                b.DefaultSpeed += 10;
+                b.Speed += 5;
 
             if (balls.Count == 0)
             {
                 b.IsPaddleBall = true;
                 b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 2.4f);
-
-                multiBallCount = 0;
+                
             }
             else
             {
                 b.IsPaddleBall = false;
                 b.position = new Vector2(balls[0].position.X, balls[0].position.Y);
-                if (multiBallCount < 2)
-                    b.direction = new Vector2(balls[0].direction.X + .2f, balls[0].direction.Y); // right now only this is executing because multiBallCount is always initialized to 0
+
+                if (balls.Count < 2)
+                {
+                    b.Speed -= 10f; // slow ball down temporarily to prevent multiple balls hitting the paddle at the same time
+                    b.direction = new Vector2(balls[0].direction.X + .1f, balls[0].direction.Y);
+                }
                 else
-                    b.direction = new Vector2(balls[0].direction.X - .2f, balls[0].direction.Y);
+                {
+                    b.Speed -= 15f;
+                    b.direction = new Vector2(balls[0].direction.X - .1f, balls[0].direction.Y);
+                }
             }  
               
             balls.Add(b);
