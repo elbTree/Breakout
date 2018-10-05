@@ -13,15 +13,9 @@ using System.Collections.Generic;
 //        The ball speed will slowly increase, the paddle width will remain the same for the first few levels then slowly decrease,
 //        and more durable blocks will be introduced
 
-// CURRENT ISSUES: 
-//                If more than one ball hits the paddle at the same time, one or both balls can go through the paddle, sometimes getting stuck 'in' the paddle temporarily. 
-//                Need to actually remove powerups from list once collected or off the screen, right now just setting shouldRemove to true
-
 // NOTE: Ball speed up is caused by altering direction in collision code (changing Y/X direction) Need to change direction without
-//       affecting speed
-// Multiball and powerups SOLUTION
-// For multiball issue (ball going through paddle) right now just made the multiballs slower to avoid them hitting the paddle at the same time (which would cause it to go through the paddle)
-// need to add a boolean and counter in update method to set balls back to DefaultSpeed after a couple of seconds 
+//       affecting speed. Maybe lower the normal value which would affect reflection calculation? Look into this.
+
 namespace blockBreaker
 {
     /// <summary>
@@ -46,7 +40,7 @@ namespace blockBreaker
         int level = 0;
         bool startOfLevel = true;
         float newLevelCounter = 0f;
-        float powerUpChance= 20; // 20% chance of dropping a powerup
+        float powerUpChance= 40; // 40% chance of dropping a powerup
 
         List<Block> blocks = new List<Block>();
         List<Ball> balls = new List<Ball>();
@@ -167,7 +161,14 @@ namespace blockBreaker
                 }
                 else
                     b.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
-                
+            }
+
+            for (int i = 0; i < balls.Count; i++)
+            {
+                if (!balls[i].IsActive)
+                {
+                    balls.RemoveAt(i);
+                }
             }
 
             foreach (PowerUp p in powerUps)
@@ -186,7 +187,7 @@ namespace blockBreaker
 
             for (int i = 0; i < powerUps.Count; i++)
             {
-                if (powerUps[i].isActive)
+                if (powerUps[i].shouldRemove)
                     powerUps.RemoveAt(i);
             }
 
@@ -294,7 +295,7 @@ namespace blockBreaker
                     float pct = ballLocation / dist;
 
                     if (pct <= 0.20f)                               // far left
-                        normal = new Vector2(-0.196f, -0.981f);
+                        normal = new Vector2(-0.196f, -0.981f);     
                     else if (pct > 0.20f && pct <= 0.40f)           // left
                         normal = new Vector2(-0.098f, -0.981f);
                     //   ball.direction = new Vector2(-1, -0.981f); 
@@ -304,7 +305,7 @@ namespace blockBreaker
                     else if (pct > .60f && pct <= .80)              // right
                         normal = new Vector2(0.098f, -0.981f);
                     else                                            // far right
-                        normal = new Vector2(0.196f, -0.981f);
+                        normal = new Vector2(0.196f, -0.981f);      
 
                     
                     ball.direction = Vector2.Reflect(ball.direction, normal);
@@ -548,7 +549,6 @@ namespace blockBreaker
                 }
             }
 
-           
         }
 
 
@@ -574,11 +574,12 @@ namespace blockBreaker
             else
             {
                 b.IsPaddleBall = false;
+                b.IsMultiBall = true;
                 b.position = new Vector2(balls[0].position.X, balls[0].position.Y);
 
                 if (balls.Count < 2)
                 {
-                    b.Speed -= 10f; // slow ball down temporarily to prevent multiple balls hitting the paddle at the same time
+                    b.Speed -= 25f; // slow ball down temporarily to prevent multiple balls hitting the paddle at the same time, which causes one or more to go through the paddle
                     b.direction = new Vector2(balls[0].direction.X + .1f, balls[0].direction.Y);
                 }
                 else
@@ -628,14 +629,16 @@ namespace blockBreaker
             switch (p.type)
             {
                 case PowerUpType.MultiBall:
-                    if (balls.Count <= 2)   // max of 3 balls
+                    if (balls.Count <= 1)   // max of 3 balls
                     {
                         SpawnBall();
                         SpawnBall();
                     }
-                    break;
+                    else if (balls.Count == 2)
+                        SpawnBall();
+                     break;
                 case PowerUpType.PaddleSizeIncrease:
-                    paddle.LongPaddleTimer = 0f;
+                    paddle.LongPaddleTimer = 0f;  // reset timer if activated again
 
                     if (!paddle.IsLongPaddle)
                     {
@@ -644,7 +647,7 @@ namespace blockBreaker
                     }
                     break;
                 case PowerUpType.FireBall:
-                    balls[0].FireBallTimer = 0f;
+                   balls[0].FireBallTimer = 0f;  
 
                     if (!balls[0].IsFireBall)
                     {
