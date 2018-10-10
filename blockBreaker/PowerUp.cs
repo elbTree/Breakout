@@ -13,14 +13,13 @@ namespace blockBreaker
     {
         MultiBall = 0,
         PaddleSizeIncrease,
-        Lasers,
         FireBall
     }
 
     public class PowerUp : GameObject
     {
         public PowerUpType type;
-        public float speed = 150;
+        public static float speed = 150;
         public bool shouldRemove = false,
                     isActive = false;
         public int screenHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
@@ -31,7 +30,7 @@ namespace blockBreaker
             type = myType;
 
             switch (type)
-            {       // add 'magnet' paddle
+            {
                 case (PowerUpType.MultiBall):
                     textureName = "multi_ball_powerUp";
                     break;
