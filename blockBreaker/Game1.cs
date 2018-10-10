@@ -33,19 +33,20 @@ namespace blockBreaker
                     wallHitSFX,
                     fireBallSFX,
                     powerUpSFX;
+        
 
         int ballWithPaddle;
 
         int score = 0;
         int level = 0;
         bool startOfLevel = true;
-        float newLevelCounter = 0f;
-        float powerUpChance= 40; // 40% chance of dropping a powerup
+        float newLevelCounter = 0f; // controls will be disabled and level string displayed for a moment when a new level first loads
+        float powerUpChance; // % chance of dropping a powerup, set in CreateLevel
 
         List<Block> blocks = new List<Block>();
         List<Ball> balls = new List<Ball>();
         List<PowerUp> powerUps = new List<PowerUp>();
-        Texture2D skyBG;
+        Texture2D background;
         Random rand;
         
         SpriteFont font;
@@ -100,7 +101,6 @@ namespace blockBreaker
 
             SpawnBall();
 
-            skyBG = Content.Load<Texture2D>("sky_background");
             blockHitSFX = Content.Load<SoundEffect>("high_beep");
             paddleHitSFX = Content.Load<SoundEffect>("low_beep");
             wallHitSFX = Content.Load<SoundEffect>("mid_beep");
@@ -152,6 +152,7 @@ namespace blockBreaker
             if (!startOfLevel)
                 paddle.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
 
+            // if ball is not launched, the position will be the same as the paddle
             foreach (Ball b in balls)
             {
                 if (b.IsActive && b.IsPaddleBall)
@@ -162,7 +163,7 @@ namespace blockBreaker
                 else
                     b.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
             }
-
+            // remove balls that have been lost
             for (int i = 0; i < balls.Count; i++)
             {
                 if (!balls[i].IsActive)
@@ -170,7 +171,7 @@ namespace blockBreaker
                     balls.RemoveAt(i);
                 }
             }
-
+            // drop powerup and check if it collides with the player
             foreach (PowerUp p in powerUps)
             {
                 Rectangle paddlePos = paddle.BoundingRect;
@@ -184,7 +185,7 @@ namespace blockBreaker
                     score += 15;
                 }
             }
-
+            // remove powerups that have been collected or off the screen
             for (int i = 0; i < powerUps.Count; i++)
             {
                 if (powerUps[i].shouldRemove)
@@ -208,7 +209,7 @@ namespace blockBreaker
 
             spriteBatch.Begin();
 
-            spriteBatch.Draw(skyBG, new Vector2(0, 0), Color.White);
+            spriteBatch.Draw(background, GraphicsDevice.Viewport.Bounds, Color.White);
 
             foreach (Block b in blocks)
                 spriteBatch.Draw(b.Texture, new Rectangle((int)b.position.X,(int)b.position.Y, (int)b.BlockWidth, (int)b.BlockHeight), Color.White);
@@ -225,7 +226,6 @@ namespace blockBreaker
             {
                 if (!p.shouldRemove)
                     p.Draw(spriteBatch);
-                
             }
 
             spriteBatch.DrawString(font, String.Format("Score: {0:#,###0}", score),
@@ -242,7 +242,7 @@ namespace blockBreaker
 
 
 
-
+        // called to check for collision between the ball and blocks 
         private bool intersects(double circle_x, double circle_y, double circle_r, double rect_x, double rect_y, double rect_width, double rect_height)
         {
             double circleDistance_x = Math.Abs(circle_x - rect_x);
@@ -309,7 +309,33 @@ namespace blockBreaker
 
                     
                     ball.direction = Vector2.Reflect(ball.direction, normal);
-                    
+
+                    // Fix the direction if it's too steep
+                    float dotResult = Vector2.Dot(ball.direction, Vector2.UnitX);
+                    if (dotResult > 0.9f)
+                    {
+                        ball.direction = new Vector2(0.906f, -0.423f);
+                    }
+                    dotResult = Vector2.Dot(ball.direction, -Vector2.UnitX);
+                    if (dotResult > 0.9f)
+                    {
+                        ball.direction = new Vector2(-0.906f, -0.423f);
+                    }
+                    dotResult = Vector2.Dot(ball.direction, -Vector2.UnitY);
+                    if (dotResult > 0.9f)
+                    {
+                        // check if clockwise or counter-clockwise
+                        Vector3 crossResult = Vector3.Cross(new Vector3(ball.direction, 0),
+                            -Vector3.UnitY);
+                        if (crossResult.Z < 0)
+                        {
+                            ball.direction = new Vector2(0.423f, -0.906f);
+                        }
+                        else
+                        {
+                            ball.direction = new Vector2(-0.423f, -0.906f);
+                        }
+                    }
 
                     // No collisions between ball and paddle for 20 frames
                     ballWithPaddle = 20;
@@ -344,10 +370,10 @@ namespace blockBreaker
 
                     int randNum = rand.Next(0, 100);
 
-                    if (randNum <= powerUpChance && (powerUps.Count <= 3))  // max of 4 powerups dropped at a time
+                    if (randNum <= powerUpChance && (powerUps.Count <= 3)) //&& collidedBlock.durability < 1)  // max of 4 powerups dropped at a time
                         DropPowerUp(collidedBlock.position);
 
-                        score += 20;
+                        
 
                     // Assume that if our Y is close to the top or bottom of the block,
                     // we're colliding with the top or bottom
@@ -365,9 +391,19 @@ namespace blockBreaker
                             ball.direction.X = -1.0f * ball.direction.X;
                         }
                     }
-                    // Now remove this block from the list
-                    if (collidedBlock.Durability < 1)
+                    // Now remove this block from the list, or damage block if durability >= 1
+                    if (collidedBlock.durability < 1)
+                    {
                         blocks.Remove(collidedBlock);
+                        score += 20;
+                    }
+                    else
+                    {
+                        collidedBlock.Texture = new Block(++collidedBlock.type, this).Texture;
+                        collidedBlock.durability--;
+                    }
+
+
                 }
 
                 // load next level once all the blocks are destroyed
@@ -377,6 +413,7 @@ namespace blockBreaker
                     CreateLevel();
                     break;          // Note to self: break is so you can modify objects in the foreach
                 }
+
                 // Check walls
                 if (Math.Abs(ball.position.X) < ball.Radius)
                 {
@@ -399,26 +436,8 @@ namespace blockBreaker
                     ball.IsActive = false;
                 }
 
-                int randVal = rand.Next(0, 100);
-
-                // prevent ball from bouncing from wall to wall with no/little change in the Y direction
-                if (ball.direction.Y >= -0.4f && ball.direction.Y <= 0)
-                    ball.direction.Y = -0.8f;
-
-                else if (ball.direction.Y >= 0 && ball.direction.Y <= 0.4f)
-                    ball.direction.Y = 0.8f;
-
-                // prevent ball from going straight up/down with no change in the X direction
-                if (ball.direction.X == 0)
-                {
-                    if (randVal > 50)
-                        ball.direction.X = -.1f;
-                    else
-                        ball.direction.X = .1f;
-                }
-
             }
-
+            // remove lost ball(s) and spawn a new one if no balls on screen
             if (lostBall != null)
             {
                 balls.Remove(lostBall);
@@ -432,8 +451,8 @@ namespace blockBreaker
                     SpawnBall();
             }
         }
-
-
+        
+        // spawn a new paddle and ball, and clear lists of all powerups, balls, and blocks
         protected void ClearLevel()
         {
             for (int i = 0; i < powerUps.Count; i++)
@@ -453,97 +472,120 @@ namespace blockBreaker
         }
 
 
-        
+
         protected void CreateLevel()
         {
             startOfLevel = true;
             newLevelCounter = 0;
             level++;
+            int blockDurability = 0;
 
-           
+            level = 3;
+
+            // after first three stages are complete, they are looped, and the block durability, powerup drop rate, powerup speed, and ball speed are all increased 
+           if (level < 4)
+            {
+                background = Content.Load<Texture2D>("sky_background");
+                blockDurability = 0;
+                powerUpChance = 40;
+            }
+            else if (level > 3 && level < 7)
+            {
+                background = Content.Load<Texture2D>("underwater_background");
+                blockDurability = 1;
+                powerUpChance = 50;
+                PowerUp.speed += 25;
+                Ball.DefaultSpeed += 25;
+            }
+            else
+            {
+                background = Content.Load<Texture2D>("space_background");
+                blockDurability = 2;
+                powerUpChance = 65;
+                PowerUp.speed += 25;
+                Ball.DefaultSpeed += 25;
+            }
 
             int[,] level1 = new int[,] {
-               {5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5},
-               {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-               {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-               {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2},
                {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-               {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4},
+               {6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6},
+               {9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9},
+               {12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12},
+               {15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15},
+               {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
              };
 
 
-            // Temporary level shapes
 
-            int[][] level2 = new int[11][];
-
-            level2[0] = new int[] { 0, 1, 2 };
-            level2[1] = new int[] { 0, 1, 2, 4, 3 };
-            level2[2] = new int[] { 0, 1, 2, 4, 3, 0, 1 };
-            level2[3] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4 };
-            level2[4] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4, 1, 3 };
-            level2[5] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4, 1, 3, 4, 1};
-            level2[6] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4, 1, 3 };
-            level2[7] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4 };
-            level2[8] = new int[] { 0, 1, 2, 4, 3, 0, 1 };
-            level2[9] = new int[] { 0, 1, 2, 4, 3 };
-            level2[10] = new int[] { 0, 1, 2 };
+            int[,] level2 = new int[,] {
+               {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
+               {6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6},
+               {9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9},
+               {12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12},
+               {15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15},
+               {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+               {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
+               {6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6},
+             };
 
 
-            int[][] level3 = new int[15][];
 
-            level3[0] = new int[] { 0, 1, 2 };
-            level3[1] = new int[] { 0, 1, 2, 4, 3 };
-            level3[2] = new int[] { 0, 1, 2, 4, 3, 0, 1 };
-            level3[3] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4 };
-            level3[4] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4, 1, 3 };
-            level3[5] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4, 1, 3, 4, 1 };
-            level3[6] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4, 1, 3 };
-            level3[7] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4 };
-            level3[8] = new int[] { 0, 1, 2, 4, 3, 0, 1 };
-            level3[9] = new int[] { 0, 1, 2, 4, 3 };
-            level3[10] = new int[] { 0, 1, 2 };
-            level3[11] = new int[] { 0, 1, 2, 4, 3 };
-            level3[12] = new int[] { 0, 1, 2, 4, 3, 0, 1 };
-            level3[13] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4 };
-            level3[14] = new int[] { 0, 1, 2, 4, 3, 0, 1, 5, 4, 1, 3 };
+            int[,] level3 = new int[,] {
+               {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
+               {6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6},
+               {9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9},
+               {12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12},
+               {15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15},
+               {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+               {9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9},
+               {12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12},
+               {15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15},
+               {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+               {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
+               {6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6},
+             };
 
 
 
 
-            if (level == 1)
+
+            if (level == 1 || level == 4 || level == 7)
             {
                 for (int i = 0; i < level1.GetLength(0); i++)
                 {
                     for (int j = 0; j < level1.GetLength(1); j++)
                     {
-                        Block b = new Block((BlockColor)level1[i, j], this);
+                        Block b = new Block((BlockType)level1[i, j], this);
                         b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
+                        b.durability = blockDurability;
                         blocks.Add(b);
                     }
                 }
             }
 
-            else if (level == 2)
+            if (level == 2 || level == 5 || level == 8)
             {
-                for (int i = 0; i < level2.Length; i++)
+                for (int i = 0; i < level2.GetLength(0); i++)
                 {
-                    for (int j = 0; j < level2[i].Length; j++)
+                    for (int j = 0; j < level2.GetLength(1); j++)
                     {
-                        Block b = new Block((BlockColor)level2[i][j], this);
-                        b.position = new Vector2(j * b.BlockWidth + screenWidth / 6, screenHeight / 6 + b.BlockHeight * i);
+                        Block b = new Block((BlockType)level2[i, j], this);
+                        b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
+                        b.durability = blockDurability;
                         blocks.Add(b);
                     }
                 }
             }
 
-            else if (level == 3)
+            if (level == 3 || level == 6 || level >= 9)
             {
-                for (int i = 0; i < level3.Length; i++)
+                for (int i = 0; i < level3.GetLength(0); i++)
                 {
-                    for (int j = 0; j < level3[i].Length; j++)
+                    for (int j = 0; j < level3.GetLength(1); j++)
                     {
-                        Block b = new Block((BlockColor)level3[i][j], this);
-                        b.position = new Vector2(j * b.BlockWidth + screenWidth / 6, screenHeight / 6 + b.BlockHeight * i);
+                        Block b = new Block((BlockType)level3[i, j], this);
+                        b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
+                        b.durability = blockDurability;
                         blocks.Add(b);
                     }
                 }
@@ -562,9 +604,6 @@ namespace blockBreaker
 
             // level = 10; adjust to test ball speed at different levels
 
-            for (int i = 1; i < level; i++) // ball speed increased by 5 for every level
-                b.Speed += 5;
-
             if (balls.Count == 0)
             {
                 b.IsPaddleBall = true;
@@ -577,15 +616,17 @@ namespace blockBreaker
                 b.IsMultiBall = true;
                 b.position = new Vector2(balls[0].position.X, balls[0].position.Y);
 
+                // slightly change the directions that the multiballs are going to separate from the original ball
                 if (balls.Count < 2)
                 {
-                    b.Speed -= 25f; // slow ball down temporarily to prevent multiple balls hitting the paddle at the same time, which causes one or more to go through the paddle
-                    b.direction = new Vector2(balls[0].direction.X + .1f, balls[0].direction.Y);
+                    b.direction = new Vector2(balls[0].direction.X + .15f, balls[0].direction.Y);
+                    b.Speed -= 25f; // temporarily slow down multiballs to prevent balls hitting the paddle at the same time and phasing through (speed is corrected in Ball class)
                 }
+
                 else
                 {
-                    b.Speed -= 15f;
-                    b.direction = new Vector2(balls[0].direction.X - .1f, balls[0].direction.Y);
+                    b.direction = new Vector2(balls[0].direction.X - .15f, balls[0].direction.Y);
+                    b.Speed -= 40f;
                 }
             }  
               
@@ -597,17 +638,17 @@ namespace blockBreaker
 
         private void DropPowerUp(Vector2 blockPos)
         {
-            int randNum = rand.Next(0, 80);
+            int randNum = rand.Next(0, 100);
             PowerUpType pType = new PowerUpType();
 
 
-            if (randNum <= 20)
+            if (randNum <= 40)
                 pType = PowerUpType.MultiBall;
 
-            else if (randNum > 20 && randNum <= 60)
+            else if (randNum > 40 && randNum < 85)
                 pType = PowerUpType.PaddleSizeIncrease;
 
-            else if (randNum > 60)
+            else if (randNum >= 85)
                 pType = PowerUpType.FireBall;
 
             PowerUp p = new PowerUp(pType, this);
