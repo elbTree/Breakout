@@ -8,8 +8,8 @@ namespace blockBreaker
 {
     class Ball : GameObject
     {
-        const float DefaultSpeed = 200;
-        float speed = 200,
+        static public float DefaultSpeed = 150;
+        float speed = 150,
               radius,
               fireBallTimer = 0f, multiBallTimer = 0f;
 
@@ -32,6 +32,7 @@ namespace blockBreaker
             get { return speed; }
             set { speed = value; }
         }
+
         public float Radius
         {
             get { return radius; }
@@ -70,13 +71,16 @@ namespace blockBreaker
 
         public override void Update(float deltaTime)
         {
-            position += direction * speed * deltaTime;
+            if (!isMultiBall)
+                position += direction * DefaultSpeed * deltaTime;
+            else
+                position += direction * speed * deltaTime;  // multiball uses speed because they are temporarily (5s) slower when first spawned
 
             if (isFireBall)
             {
                 fireBallTimer += deltaTime;
 
-                if (fireBallTimer > 10f)
+                if (fireBallTimer > 15f)
                 {
                     this.textureName = "ball";
                     this.LoadContent();
