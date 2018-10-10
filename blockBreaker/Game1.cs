@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using FitMi_Research_Puck;
 
 // NOTES: Want to be able to adjust paddle width and sensetivity; Collect data (save exactly what the user is doing, and any events (like score, levels, bonuses etc.),
 //        and output to a text file). Also want to keep track of how many days or time the user is playing the game.
@@ -31,13 +32,12 @@ namespace blockBreaker
                     wallHitSFX,
                     fireBallSFX,
                     powerUpSFX;
-        
 
         int ballWithPaddle;
 
         int score = 0;
         int level = 0;
-        bool startOfLevel = true;
+        public static bool startOfLevel = true;
         float newLevelCounter = 0f; // controls will be disabled and level string displayed for a moment when a new level first loads
         float powerUpChance; // % chance of dropping a powerup, set in CreateLevel
 
@@ -141,6 +141,7 @@ namespace blockBreaker
               }
 
             
+
             // keep track of how long the "Level X" string is on the screen, disable paddle until it's gone
             newLevelCounter += 0.05f;
 

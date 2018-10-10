@@ -12,8 +12,8 @@ namespace blockBreaker
         float speed = 150,
               radius,
               fireBallTimer = 0f, multiBallTimer = 0f;
-
-        bool isActive = true, isPaddleBall = false, isFireBall = false, isMultiBall = false;
+        static public bool isPaddleBall = true;
+        bool isActive = true, isFireBall = false, isMultiBall = false;
         public Vector2 direction = new Vector2(0, -1);
 
         public Ball(Game myGame) :
