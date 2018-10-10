@@ -61,7 +61,7 @@ namespace blockBreaker
             {
                 longPaddleTimer += deltaTime;
 
-                if (longPaddleTimer > 30f)
+                if (longPaddleTimer > 10f)
                 {
                     textureName = "paddle";
                     this.LoadContent();
