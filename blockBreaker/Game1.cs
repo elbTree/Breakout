@@ -13,8 +13,6 @@ using System.Collections.Generic;
 //        The ball speed will slowly increase, the paddle width will remain the same for the first few levels then slowly decrease,
 //        and more durable blocks will be introduced
 
-// NOTE: Ball speed up is caused by altering direction in collision code (changing Y/X direction) Need to change direction without
-//       affecting speed. Maybe lower the normal value which would affect reflection calculation? Look into this.
 
 namespace blockBreaker
 {
@@ -61,7 +59,7 @@ namespace blockBreaker
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            graphics.IsFullScreen = false;
+            graphics.IsFullScreen = true;
             graphics.PreferredBackBufferWidth = screenWidth;
             graphics.PreferredBackBufferHeight = screenHeight;
         }
@@ -163,14 +161,14 @@ namespace blockBreaker
                 else
                     b.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
             }
-            // remove balls that have been lost
-            for (int i = 0; i < balls.Count; i++)
-            {
-                if (!balls[i].IsActive)
-                {
-                    balls.RemoveAt(i);
-                }
-            }
+            //// remove balls that have been lost
+            //for (int i = 0; i < balls.Count; i++)
+            //{
+            //    if (!balls[i].IsActive)
+            //    {
+            //        balls.RemoveAt(i);
+            //    }
+            //}
             // drop powerup and check if it collides with the player
             foreach (PowerUp p in powerUps)
             {
@@ -360,7 +358,6 @@ namespace blockBreaker
 
                 }
 
-                // Determine ball reflection
                 if (collidedBlock != null)
                 {
                     if (!ball.IsFireBall)
@@ -480,20 +477,20 @@ namespace blockBreaker
             level++;
             int blockDurability = 0;
 
-            level = 3;
-
             // after first three stages are complete, they are looped, and the block durability, powerup drop rate, powerup speed, and ball speed are all increased 
-           if (level < 4)
+            // the paddle also slightly decreases in width
+            if (level < 4)
             {
                 background = Content.Load<Texture2D>("sky_background");
                 blockDurability = 0;
-                powerUpChance = 40;
+                powerUpChance = 50;
             }
             else if (level > 3 && level < 7)
             {
                 background = Content.Load<Texture2D>("underwater_background");
                 blockDurability = 1;
-                powerUpChance = 50;
+                powerUpChance = 60;
+                paddle.Texture = Content.Load<Texture2D>("paddle_2nd_smallest");
                 PowerUp.speed += 25;
                 Ball.DefaultSpeed += 25;
             }
@@ -501,7 +498,8 @@ namespace blockBreaker
             {
                 background = Content.Load<Texture2D>("space_background");
                 blockDurability = 2;
-                powerUpChance = 65;
+                powerUpChance = 70;
+                paddle.Texture = Content.Load<Texture2D>("paddle_smallest");
                 PowerUp.speed += 25;
                 Ball.DefaultSpeed += 25;
             }
@@ -511,9 +509,7 @@ namespace blockBreaker
                {6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6},
                {9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9},
                {12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12},
-               {15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15},
-               {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-             };
+            };
 
 
 
@@ -524,8 +520,6 @@ namespace blockBreaker
                {12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12},
                {15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15},
                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-               {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-               {6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6},
              };
 
 
@@ -539,11 +533,7 @@ namespace blockBreaker
                {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
                {9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9},
                {12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12},
-               {15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15,15},
-               {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-               {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
-               {6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6},
-             };
+            };
 
 
 
