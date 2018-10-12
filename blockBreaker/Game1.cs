@@ -40,14 +40,24 @@ namespace blockBreaker
         public static bool startOfLevel = true;
         float newLevelCounter = 0f; // controls will be disabled and level string displayed for a moment when a new level first loads
         float powerUpChance; // % chance of dropping a powerup, set in CreateLevel
+        float dataTimer = 0;  // used as timer to print various puck values on the screen slower than fps
+
+        // 0 == largest paddle, 1 == smaller paddle, 2 == smallest paddle
+        // 0 == least amount of blocks, 1 == medium amount, 2 = largest amount
+        // [ballSpeed, paddleWidth, availability of power-ups, blockLevel, durabilityOfBlocks, progressDifficulty(0 == true, 1 == false)]
+        // starting values, the game will slightly increase the speed of the ball, decrease paddlewidth, increase power-up frequency, 
+        // and make blocks more durable (up to two hits) if progressDifficulty is set to true 
+        float[] levelParams = { Ball.DefaultSpeed, 0, 60, 0, 0, 1 };
 
         List<Block> blocks = new List<Block>();
         List<Ball> balls = new List<Ball>();
         List<PowerUp> powerUps = new List<PowerUp>();
         Texture2D background;
-        Random rand;
+        Random rand = new Random();
         
         SpriteFont font;
+
+        HIDPuckDongle puckDongle = new HIDPuckDongle();
 
         int screenWidth = 1366;
         int screenHeight = 768;
@@ -76,9 +86,9 @@ namespace blockBreaker
         {
             // TODO: Add your initialization logic here
 
-            rand = new Random();
-            
-            
+            puckDongle.Open();
+
+
             base.Initialize();
         }
 
@@ -162,6 +172,8 @@ namespace blockBreaker
                 else
                     b.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
             }
+
+
             //// remove balls that have been lost
             //for (int i = 0; i < balls.Count; i++)
             //{
@@ -170,6 +182,8 @@ namespace blockBreaker
             //        balls.RemoveAt(i);
             //    }
             //}
+
+
             // drop powerup and check if it collides with the player
             foreach (PowerUp p in powerUps)
             {
@@ -192,6 +206,24 @@ namespace blockBreaker
             }
 
             CheckCollisions();
+
+            dataTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            if (dataTimer > 0.5f)
+            {
+                try
+                {
+                    puckDongle.CheckForNewPuckData();
+                    //  full_packet = puck_dongle.full_packet;
+                }
+                catch (Exception)
+                {
+                    //      full_packet = "UNABLE TO READ FULL PACKET!";
+                }
+
+                dataTimer = 0f;
+            }
+
             base.Update(gameTime);
         }
 
@@ -233,8 +265,12 @@ namespace blockBreaker
             if (startOfLevel)
                 spriteBatch.DrawString(font, String.Format("Level {0:#0}", level),
                                        new Vector2(screenWidth / 2.5f, screenHeight / 12), Color.White, 0, Vector2.Zero, 2, SpriteEffects.None, 0);
-        
-                
+
+
+            spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[0].ToString(), new Vector2(100, 150), Color.White);
+            spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[1].ToString(), new Vector2(100, 200), Color.White);
+            spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[2].ToString(), new Vector2(100, 250), Color.White);
+
             spriteBatch.End();
             base.Draw(gameTime);
         }
@@ -389,6 +425,7 @@ namespace blockBreaker
                             ball.direction.X = -1.0f * ball.direction.X;
                         }
                     }
+
                     // Now remove this block from the list, or damage block if durability >= 1
                     if (collidedBlock.durability < 1)
                     {
@@ -478,6 +515,7 @@ namespace blockBreaker
             level++;
             int blockDurability = 0;
 
+            
             // after first three stages are complete, they are looped, and the block durability, powerup drop rate, powerup speed, and ball speed are all increased 
             // the paddle also slightly decreases in width
             if (level < 4)
@@ -567,6 +605,7 @@ namespace blockBreaker
                     }
                 }
             }
+
 
             if (level == 3 || level == 6 || level >= 9)
             {
