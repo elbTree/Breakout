@@ -59,7 +59,7 @@ namespace blockBreaker
         int screenHeight = 768;
 
 
-
+    
 
         public Game1()
         {
@@ -82,7 +82,7 @@ namespace blockBreaker
         {
             // TODO: Add your initialization logic here
 
-            puckDongle.Open();
+           puckDongle.Open();
 
 
             base.Initialize();
@@ -162,22 +162,32 @@ namespace blockBreaker
             {
                 if (b.IsActive && b.IsPaddleBall)
                 {
-                    b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 2.4f);
+                    b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 2f);
                     b.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
                 }
                 else
                     b.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+
+                CheckCollisions(b);
             }
 
 
-            //// remove balls that have been lost
-            //for (int i = 0; i < balls.Count; i++)
-            //{
-            //    if (!balls[i].IsActive)
-            //    {
-            //        balls.RemoveAt(i);
-            //    }
-            //}
+            // remove balls that have been lost
+            for (int i = 0; i < balls.Count; i++)
+            {
+                if (!balls[i].IsActive)
+                {
+                    balls.RemoveAt(i);
+
+                    if (score > 50)
+                    {
+                        score -= 5;
+                    }
+
+                    if (balls.Count == 0)
+                        SpawnBall();
+                }
+            }
 
 
             // drop powerup and check if it collides with the player
@@ -194,15 +204,19 @@ namespace blockBreaker
                     score += 15;
                 }
             }
+
             // remove powerups that have been collected or off the screen
-            for (int i = 0; i < powerUps.Count; i++)
+            for (int i = powerUps.Count - 1; i >= 0; i--)
             {
                 if (powerUps[i].shouldRemove)
                     powerUps.RemoveAt(i);
             }
 
-            CheckCollisions();
-
+            if (blocks.Count == 0)
+            {
+                ClearLevel();
+                CreateLevel();
+            }
             dataTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             if (dataTimer > 0.5f)
@@ -248,6 +262,11 @@ namespace blockBreaker
             {
                 if (b.IsActive)
                     spriteBatch.Draw(b.Texture, b.position, Color.White);
+
+                spriteBatch.DrawString(font, String.Format("Ball Direction.X: {0:#,###0}", b.direction.X.ToString()),
+                                   new Vector2(100, 200), Color.White);
+                spriteBatch.DrawString(font, String.Format("Ball Direction.Y: {0:#,###0}", b.direction.Y.ToString()),
+                                   new Vector2(100, 250), Color.White);
             }
             foreach (PowerUp p in powerUps)
             {
@@ -263,10 +282,14 @@ namespace blockBreaker
                                        new Vector2(screenWidth / 2.5f, screenHeight / 12), Color.White, 0, Vector2.Zero, 2, SpriteEffects.None, 0);
 
 
-            spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[0].ToString(), new Vector2(100, 150), Color.White);
-            spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[1].ToString(), new Vector2(100, 200), Color.White);
-            spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[2].ToString(), new Vector2(100, 250), Color.White);
+            //spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[0].ToString(), new Vector2(100, 150), Color.White);
+            //spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[1].ToString(), new Vector2(100, 200), Color.White);
+            //spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[2].ToString(), new Vector2(100, 250), Color.White);
 
+            spriteBatch.DrawString(font, String.Format("Ball Count: {0:#,###0}", balls.Count.ToString()),
+                                   new Vector2(100, 150), Color.White);
+            
+     
             spriteBatch.End();
             base.Draw(gameTime);
         }
@@ -293,206 +316,198 @@ namespace blockBreaker
 
 
 
-        protected void CheckCollisions()
+        private void CheckCollisions(Ball ball)
         {
-            Ball lostBall = null;
-
-            foreach (Ball ball in balls)
+            // Check for paddle
+            if ((ballWithPaddle == 0 &&
+                (ball.position.X > (paddle.position.X - ball.Radius - paddle.Width / 2)) && // Left, Right, and top half of paddle
+                (ball.position.X < (paddle.position.X + ball.Radius + paddle.Width / 2)) &&
+                (ball.position.Y < paddle.position.Y) &&
+                (ball.position.Y > (paddle.position.Y - ball.Radius - paddle.Height / 2))))
             {
-                // Check for paddle
-                if ((ballWithPaddle == 0 &&
-                    (ball.position.X > (paddle.position.X - ball.Radius - paddle.Width / 2)) && // Left, Right, and top half of paddle
-                    (ball.position.X < (paddle.position.X + ball.Radius + paddle.Width / 2)) &&
-                    (ball.position.Y < paddle.position.Y) &&
-                    (ball.position.Y > (paddle.position.Y - ball.Radius - paddle.Height / 2))))
-                {
-                    if (!ball.IsPaddleBall)
-                        paddleHitSFX.Play();
+                if (!ball.IsPaddleBall)
+                {   
+                    paddleHitSFX.Play();
+                    score += 1;
+                }
+                // Reflect based on which part of the paddle is hit
 
-                    // Reflect based on which part of the paddle is hit
+                // By default, set the normal to up
+                    Vector2 normal = -1.0f * Vector2.UnitY;
+                // ball.direction = -1.0f * Vector2.UnitY;       // Changing direction explicitly makes the ball more predictable
 
-                    // By default, set the normal to up
-                     Vector2 normal = -1.0f * Vector2.UnitY;
-                    // ball.direction = -1.0f * Vector2.UnitY;       // Changing direction explicitly makes the ball more predictable
+                // Distance from the leftmost to rightmost part of the paddle
+                float dist = paddle.Width + ball.Radius * 2;
 
-                    // Distance from the leftmost to rightmost part of the paddle
-                    float dist = paddle.Width + ball.Radius * 2;
+                // Where within this distance the ball is at
+                float ballLocation = ball.position.X -
+                    (paddle.position.X - ball.Radius - paddle.Width / 2);
 
-                    // Where within this distance the ball is at
-                    float ballLocation = ball.position.X -
-                        (paddle.position.X - ball.Radius - paddle.Width / 2);
+                // Percent between leftmost and rightmost part of paddle
+                float pct = ballLocation / dist;
 
-                    // Percent between leftmost and rightmost part of paddle
-                    float pct = ballLocation / dist;
-
-                    if (pct <= 0.20f)                               // far left
-                        normal = new Vector2(-0.196f, -0.981f);     
-                    else if (pct > 0.20f && pct <= 0.40f)           // left
-                        normal = new Vector2(-0.098f, -0.981f);
-                    //   ball.direction = new Vector2(-1, -0.981f); 
-                    else if (pct > 0.40f && pct <= .60f)            // middle
-                        normal = new Vector2(0, -0.981f);
-                    // ball.direction = new Vector2(1, -0.981f);
-                    else if (pct > .60f && pct <= .80)              // right
-                        normal = new Vector2(0.098f, -0.981f);
-                    else                                            // far right
-                        normal = new Vector2(0.196f, -0.981f);      
+                if (pct <= 0.20f)                               // far left
+                    normal = new Vector2(-0.196f, -0.981f);     
+                else if (pct > 0.20f && pct <= 0.40f)           // left
+                    normal = new Vector2(-0.096f, -0.981f);
+                //   ball.direction = new Vector2(-1, -0.981f); 
+                else if (pct > 0.40f && pct <= .60f)            // middle
+                    normal = new Vector2(0, -0.981f);
+                // ball.direction = new Vector2(1, -0.981f);
+                else if (pct > .60f && pct <= .80)              // right
+                    normal = new Vector2(0.096f, -0.981f);
+                else                                            // far right
+                    normal = new Vector2(0.196f, -0.981f);      
 
                     
-                    ball.direction = Vector2.Reflect(ball.direction, normal);
+                ball.direction = Vector2.Reflect(ball.direction, normal);
 
-                    // Fix the direction if it's too steep
-                    float dotResult = Vector2.Dot(ball.direction, Vector2.UnitX);
-                    if (dotResult > 0.9f)
-                    {
-                        ball.direction = new Vector2(0.906f, -0.423f);
-                    }
-                    dotResult = Vector2.Dot(ball.direction, -Vector2.UnitX);
-                    if (dotResult > 0.9f)
-                    {
-                        ball.direction = new Vector2(-0.906f, -0.423f);
-                    }
-                    dotResult = Vector2.Dot(ball.direction, -Vector2.UnitY);
-                    if (dotResult > 0.9f)
-                    {
-                        // check if clockwise or counter-clockwise
-                        Vector3 crossResult = Vector3.Cross(new Vector3(ball.direction, 0),
-                            -Vector3.UnitY);
-                        if (crossResult.Z < 0)
-                        {
-                            ball.direction = new Vector2(0.423f, -0.906f);
-                        }
-                        else
-                        {
-                            ball.direction = new Vector2(-0.423f, -0.906f);
-                        }
-                    }
+                // Fix the direction if it's too steep
+                AngleCorrection(ball);
 
-                    // No collisions between ball and paddle for 20 frames
-                    ballWithPaddle = 20;
-                }
-                else if (ballWithPaddle > 0)
-                {
-                    ballWithPaddle--;
-                }
+                // No collisions between ball and paddle for 20 frames
+                ballWithPaddle = 20;
+            }
+            else if (ballWithPaddle > 0)
+            {
+                ballWithPaddle--;
+            }
 
 
-                // Check for block collisions
-                Block collidedBlock = null;
+            // Check for block collisions
+            Block collidedBlock = null;
 
                 
-                foreach (Block b in blocks)
+            foreach (Block b in blocks)
+            {
+                if (intersects(ball.position.X, ball.position.Y, ball.Radius, b.position.X + b.BlockWidth / 3, b.position.Y, b.BlockWidth, b.BlockHeight))
                 {
-                    if (intersects(ball.position.X, ball.position.Y, ball.Radius, b.position.X + b.BlockWidth / 3, b.position.Y, b.BlockWidth, b.BlockHeight))
-                    {
-                        collidedBlock = b;
-                        break;
-                    }
-
-                }
-
-                if (collidedBlock != null)
-                {
-                    if (!ball.IsFireBall)
-                        blockHitSFX.Play();
-                    else
-                        fireBallSFX.Play();
-
-                    int randNum = rand.Next(0, 100);
-
-                    if (randNum <= powerUpChance && (powerUps.Count <= 3)) //&& collidedBlock.durability < 1)  // max of 4 powerups dropped at a time
-                        DropPowerUp(collidedBlock.position);
-
-                        
-
-                    // Assume that if our Y is close to the top or bottom of the block,
-                    // we're colliding with the top or bottom
-                    if (!ball.IsFireBall)
-                    {
-                        if ((ball.position.Y <
-                            (collidedBlock.position.Y - collidedBlock.BlockHeight / 2)) ||
-                            (ball.position.Y >
-                            (collidedBlock.position.Y + collidedBlock.BlockHeight / 2)))
-                        {
-                            ball.direction.Y = -1.0f * ball.direction.Y;
-                        }
-                        else // otherwise, we have to be colliding from the sides
-                        {
-                            ball.direction.X = -1.0f * ball.direction.X;
-                        }
-                    }
-
-                    // Now remove this block from the list, or damage block if durability >= 1
-                    if (collidedBlock.durability < 1)
-                    {
-                        blocks.Remove(collidedBlock);
-                        score += 20;
-                    }
-                    else
-                    {
-                        collidedBlock.Texture = new Block(++collidedBlock.type, this).Texture;
-                        collidedBlock.durability--;
-                    }
-
-
-                }
-
-                // load next level once all the blocks are destroyed
-                if (blocks.Count == 0)
-                {
-                    ClearLevel();
-                    CreateLevel();
-                    break;          // Note to self: break is so you can modify objects in the foreach
-                }
-
-                // Check walls
-                if (Math.Abs(ball.position.X) < ball.Radius)
-                {
-                    wallHitSFX.Play();
-                    ball.direction.X = -1.0f * ball.direction.X;
-                }
-                else if (Math.Abs(ball.position.X - graphics.PreferredBackBufferWidth) < ball.Radius)
-                {
-                    wallHitSFX.Play();
-                    ball.direction.X = -1.0f * ball.direction.X;
-                }
-                else if (Math.Abs(ball.position.Y) < ball.Radius)
-                {
-                    wallHitSFX.Play();
-                    ball.direction.Y = -1.0f * ball.direction.Y;
-                }
-                else if (ball.position.Y > (graphics.PreferredBackBufferHeight + ball.Radius))
-                {
-                    lostBall = ball;
-                    ball.IsActive = false;
+                    collidedBlock = b;
+                    break;
                 }
 
             }
-            // remove lost ball(s) and spawn a new one if no balls on screen
-            if (lostBall != null)
-            {
-                balls.Remove(lostBall);
 
-                if (score > 50)
+            if (collidedBlock != null)
+            {
+                if (!ball.IsFireBall)
+                    blockHitSFX.Play();
+                else
+                    fireBallSFX.Play();
+
+                int randNum = rand.Next(0, 100);
+
+                if (randNum <= powerUpChance && (powerUps.Count <= 3)) //&& collidedBlock.durability < 1)  // max of 4 powerups dropped at a time
+                    DropPowerUp(collidedBlock.position);
+
+                        
+
+                // Assume that if our Y is close to the top or bottom of the block,
+                // we're colliding with the top or bottom
+                if (!ball.IsFireBall)
                 {
-                    score -= 5;
+                    if ((ball.position.Y <
+                        (collidedBlock.position.Y - collidedBlock.BlockHeight / 2)) ||
+                        (ball.position.Y >
+                        (collidedBlock.position.Y + collidedBlock.BlockHeight / 2)))
+                    {
+                        ball.direction.Y = -1.0f * ball.direction.Y;
+                    }
+                    else // otherwise, we have to be colliding from the sides
+                    {
+                        ball.direction.X = -1.0f * ball.direction.X;
+                    }
                 }
 
-                if (balls.Count == 0)
-                    SpawnBall();
+                // Now remove this block from the list, or damage block if durability >= 1
+                if (collidedBlock.durability < 1)
+                {
+                    blocks.Remove(collidedBlock);
+                    score += 20;
+                }
+                else
+                {
+                    collidedBlock.Texture = new Block(++collidedBlock.type, this).Texture;
+                    collidedBlock.durability--;
+                }
+            }
+                
+
+            // Check walls
+            if (Math.Abs(ball.position.X) < ball.Radius)
+            {
+                wallHitSFX.Play();
+                ball.direction.X = -1.0f * ball.direction.X;
+            }
+            else if (Math.Abs(ball.position.X - graphics.PreferredBackBufferWidth) < ball.Radius)
+            {
+                wallHitSFX.Play();
+                ball.direction.X = -1.0f * ball.direction.X;
+            }
+            else if (Math.Abs(ball.position.Y) < ball.Radius)
+            {
+                wallHitSFX.Play();
+                ball.direction.Y = -1.0f * ball.direction.Y;
+            }
+            else if (ball.position.Y > (graphics.PreferredBackBufferHeight + ball.Radius))
+                ball.IsActive = false;
+
+            // prevent low direction values that would 'slow' the ball down too much
+            if (!ball.IsPaddleBall)
+            {
+                if (ball.direction.Y <= 0.35f && ball.direction.Y >= 0)
+                    ball.direction.Y += 0.2f;
+                else if (ball.direction.Y >= -0.35f && ball.direction.Y <= 0)
+                    ball.direction.Y -= 0.2f;
+                if (ball.direction.X <= 0.35f && ball.direction.X >= 0)
+                    ball.direction.X += 0.2f;
+                else if (ball.direction.X >= -0.35f && ball.direction.X <= 0)
+                    ball.direction.X -= 0.2f;
+            }
+        }
+
+
+        // adjust angle of ball if it is too steep
+        private void AngleCorrection(Ball ball)
+        {
+            // Fix the direction if it's too steep
+            float dotResult = Vector2.Dot(ball.direction, Vector2.UnitX);
+            if (dotResult > 0.9f)
+            {
+                ball.direction = new Vector2(0.906f, -0.423f);
+            }
+            dotResult = Vector2.Dot(ball.direction, -Vector2.UnitX);
+            if (dotResult > 0.9f)
+            {
+                ball.direction = new Vector2(-0.906f, -0.423f);
+            }
+            dotResult = Vector2.Dot(ball.direction, -Vector2.UnitY);
+            if (dotResult > 0.9f)
+            {
+                // check if clockwise or counter-clockwise
+                Vector3 crossResult = Vector3.Cross(new Vector3(ball.direction, 0),
+                    -Vector3.UnitY);
+                if (crossResult.Z < 0)
+                {
+                    ball.direction = new Vector2(0.423f, -0.906f);
+                }
+                else
+                {
+                    ball.direction = new Vector2(-0.423f, -0.906f);
+                }
             }
         }
         
         // spawn a new paddle and ball, and clear lists of all powerups, balls, and blocks
         protected void ClearLevel()
         {
-            for (int i = 0; i < powerUps.Count; i++)
+            for (int i = powerUps.Count - 1; i >= 0; i--)
                 powerUps.RemoveAt(i);
 
-            for (int i = 0; i < balls.Count; i++)
+            for (int i = balls.Count - 1; i >= 0; i--)
                 balls.RemoveAt(i);
 
-            for (int i = 0; i < blocks.Count; i++) // not necessary, but added this to maybe add the option of skipping levels
+            for (int i = blocks.Count - 1; i >= 0; i--) // not necessary, but added this to maybe add the option of skipping levels
                 blocks.RemoveAt(i);
 
             paddle = new Paddle(this);
@@ -633,8 +648,7 @@ namespace blockBreaker
             if (balls.Count == 0)
             {
                 b.IsPaddleBall = true;
-                b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 2.4f);
-                
+                b.position = new Vector2(paddle.position.X, paddle.position.Y - b.Radius * 2f);
             }
             else
             {
@@ -666,7 +680,7 @@ namespace blockBreaker
         {
             int randNum = rand.Next(0, 100);
             PowerUpType pType = new PowerUpType();
-
+            
 
             if (randNum <= 40)
                 pType = PowerUpType.MultiBall;
