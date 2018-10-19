@@ -9,9 +9,12 @@ namespace blockBreaker
     class Ball : GameObject
     {
         static public float DefaultSpeed = 150;
-        float speed = 150,
+        float speed,
               radius,
               fireBallTimer = 0f, multiBallTimer = 0f;
+        static public int slow = 125,
+                          medium = 150,
+                          fast = 175;
         static public bool isPaddleBall = true;
         bool isActive = true, isFireBall = false, isMultiBall = false;
         public Vector2 direction = new Vector2(0, -1);
@@ -20,6 +23,7 @@ namespace blockBreaker
             base(myGame)
         {
             textureName = "ball";
+            speed = DefaultSpeed;
         }
 
         public Texture2D Texture
