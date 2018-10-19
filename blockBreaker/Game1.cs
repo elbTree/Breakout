@@ -36,14 +36,23 @@ namespace blockBreaker
         public static bool startOfLevel = true;
         float newLevelCounter = 0f; // controls will be disabled and level string displayed for a moment when a new level first loads
         float powerUpChance; // % chance of dropping a powerup, set in CreateLevel
+        float powerUpTimer = 0; // used to prevent power-ups from dropping near-simultaneously
         float dataTimer = 0;  // used as timer to print various puck values on the screen slower than fps
 
-        // 0 == largest paddle, 1 == smaller paddle, 2 == smallest paddle
-        // 0 == least amount of blocks, 1 == medium amount, 2 = largest amount
-        // [ballSpeed, paddleWidth, availability of power-ups, blockLevel, durabilityOfBlocks, progressDifficulty(0 == true, 1 == false)]
-        // starting values, the game will slightly increase the speed of the ball, decrease paddlewidth, increase power-up frequency, 
-        // and make blocks more durable (up to two hits) if progressDifficulty is set to true 
-        float[] levelParams = { Ball.DefaultSpeed, 0, 60, 0, 0, 1 };
+          public enum LevelParameter
+            {
+                Background = 0,    // 0 == Sky, 1 == underwater, 2 == space
+                BallSpeed,         // 0 == slow, 1 == medium, 2 == fast
+                PaddleWidth,       // 0 == largest paddle, 1 == smaller paddle, 2 == smallest paddle
+                PowerUpFrequency,  // power-up frequency is a percentage => 40 would be 40% chance of a block dropping a powerup
+                MapSize,           // 0 == least amount of blocks, 1 == medium amount, 2 = largest amount
+                BlockDurability,   //  0 == 1 hit to destroy blocks, 1 == 2 hits to destroy block, 2 == 3 hits to destroy block
+                ProgressDifficulty // progressDifficulty => the game will slightly increase the speed of the ball, decrease paddlewidth, increase power-up frequency, 
+                                   // and make blocks more durable (up to two hits) if progressDifficulty is set to true
+            }
+
+       // [background, ballSpeed, paddleWidth, availability of power-ups, blockLevel, durabilityOfBlocks, progressDifficulty 0 == false, 1 == true]
+        int[] levelParams = { 0, 0, 0, 50, 0, 0, 1 }; // for now just setting the values here, but going to read them from a file or maybe command line
 
         List<Block> blocks = new List<Block>();
         List<Ball> balls = new List<Ball>();
@@ -82,7 +91,7 @@ namespace blockBreaker
         {
             // TODO: Add your initialization logic here
 
-           puckDongle.Open();
+            puckDongle.Open();
 
 
             base.Initialize();
@@ -138,6 +147,8 @@ namespace blockBreaker
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+            powerUpTimer += 0.05f;
+
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                Exit();
             if (Keyboard.GetState().IsKeyDown(Keys.Space) && !startOfLevel)
@@ -286,10 +297,6 @@ namespace blockBreaker
             //spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[1].ToString(), new Vector2(100, 200), Color.White);
             //spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[2].ToString(), new Vector2(100, 250), Color.White);
 
-            spriteBatch.DrawString(font, String.Format("Ball Count: {0:#,###0}", balls.Count.ToString()),
-                                   new Vector2(100, 150), Color.White);
-            
-     
             spriteBatch.End();
             base.Draw(gameTime);
         }
@@ -397,9 +404,11 @@ namespace blockBreaker
 
                 int randNum = rand.Next(0, 100);
 
-                if (randNum <= powerUpChance && (powerUps.Count <= 3)) //&& collidedBlock.durability < 1)  // max of 4 powerups dropped at a time
+                if (randNum <= powerUpChance && (powerUps.Count <= 3) && powerUpTimer >= 3) //&& collidedBlock.durability < 1)  // max of 4 powerups dropped at a time
+                {
                     DropPowerUp(collidedBlock.position);
-
+                    powerUpTimer = 0;
+                }
                         
 
                 // Assume that if our Y is close to the top or bottom of the block,
@@ -452,7 +461,7 @@ namespace blockBreaker
             else if (ball.position.Y > (graphics.PreferredBackBufferHeight + ball.Radius))
                 ball.IsActive = false;
 
-            // prevent low direction values that would 'slow' the ball down too much
+            // prevent low direction values that would slow the ball down too much
             if (!ball.IsPaddleBall)
             {
                 if (ball.direction.Y <= 0.35f && ball.direction.Y >= 0)
@@ -498,6 +507,8 @@ namespace blockBreaker
             }
         }
         
+
+
         // spawn a new paddle and ball, and clear lists of all powerups, balls, and blocks
         protected void ClearLevel()
         {
@@ -519,42 +530,16 @@ namespace blockBreaker
 
 
 
+
         protected void CreateLevel()
         {
             startOfLevel = true;
             newLevelCounter = 0;
             level++;
             int blockDurability = 0;
+            bool progressDifficulty = false;
 
-            
-            // after first three stages are complete, they are looped, and the block durability, powerup drop rate, powerup speed, and ball speed are all increased 
-            // the paddle also slightly decreases in width
-            if (level < 4)
-            {
-                background = Content.Load<Texture2D>("sky_background");
-                blockDurability = 0;
-                powerUpChance = 50;
-            }
-            else if (level > 3 && level < 7)
-            {
-                background = Content.Load<Texture2D>("underwater_background");
-                blockDurability = 1;
-                powerUpChance = 60;
-                paddle.Texture = Content.Load<Texture2D>("paddle_2nd_smallest");
-                PowerUp.speed += 25;
-                Ball.DefaultSpeed += 25;
-            }
-            else
-            {
-                background = Content.Load<Texture2D>("space_background");
-                blockDurability = 2;
-                powerUpChance = 70;
-                paddle.Texture = Content.Load<Texture2D>("paddle_smallest");
-                PowerUp.speed += 25;
-                Ball.DefaultSpeed += 25;
-            }
-
-            int[,] level1 = new int[,] {
+            int[,] leastBlocks = new int[,] {
                {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
                {6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6},
                {9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9},
@@ -563,7 +548,7 @@ namespace blockBreaker
 
 
 
-            int[,] level2 = new int[,] {
+            int[,] midBlocks = new int[,] {
                {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
                {6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6},
                {9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9},
@@ -574,7 +559,7 @@ namespace blockBreaker
 
 
 
-            int[,] level3 = new int[,] {
+            int[,] mostBlocks = new int[,] {
                {3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3},
                {6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6},
                {9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9},
@@ -585,52 +570,139 @@ namespace blockBreaker
                {12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12},
             };
 
+            // right now just a bunch of switch statements to set levelParams, create loop later
 
-
-
-
-            if (level == 1 || level == 4 || level == 7)
+            // set level
+            switch (levelParams[(int)LevelParameter.Background])
             {
-                for (int i = 0; i < level1.GetLength(0); i++)
-                {
-                    for (int j = 0; j < level1.GetLength(1); j++)
-                    {
-                        Block b = new Block((BlockType)level1[i, j], this);
-                        b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
-                        b.durability = blockDurability;
-                        blocks.Add(b);
-                    }
-                }
+                case 0:
+                    background = Content.Load<Texture2D>("sky_background");
+                    break;
+                case 1:
+                    background = Content.Load<Texture2D>("underwater_background");
+                    break;
+                case 2:
+                    background = Content.Load<Texture2D>("space_background");
+                    break;
             }
 
-            if (level == 2 || level == 5 || level == 8)
+            // set ball speed
+            switch (levelParams[(int)LevelParameter.BallSpeed])
             {
-                for (int i = 0; i < level2.GetLength(0); i++)
-                {
-                    for (int j = 0; j < level2.GetLength(1); j++)
+                case 0:
+                    Ball.DefaultSpeed = Ball.slow;
+                    break;
+                case 1:
+                    Ball.DefaultSpeed = Ball.medium;
+                    break;
+                case 2:
+                    Ball.DefaultSpeed = Ball.fast;
+                    break;
+            }
+
+            // set paddle width
+            switch (levelParams[(int)LevelParameter.PaddleWidth])
+            {
+                case 0:
+                    paddle.Texture = Content.Load<Texture2D>("paddle");
+                    break;
+                case 1:
+                    paddle.Texture = Content.Load<Texture2D>("paddle_2nd_smallest");
+                    break;
+                case 2:
+                    paddle.Texture = Content.Load<Texture2D>("paddle_smallest");
+                    break;
+            }
+
+            // set power-up frequency/chance of dropping a power-up
+            powerUpChance = levelParams[(int)LevelParameter.PowerUpFrequency];
+
+            // set map
+            switch (levelParams[(int)LevelParameter.MapSize])
+            {
+                case 0:
+                    for (int i = 0; i < leastBlocks.GetLength(0); i++)
                     {
-                        Block b = new Block((BlockType)level2[i, j], this);
-                        b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
-                        b.durability = blockDurability;
-                        blocks.Add(b);
+                        for (int j = 0; j < leastBlocks.GetLength(1); j++)
+                        {
+                            Block b = new Block((BlockType)leastBlocks[i, j], this);
+                            b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
+                            b.durability = blockDurability;
+                            blocks.Add(b);
+                        }
                     }
-                }
+                    break;
+                case 1:
+                    for (int i = 0; i < midBlocks.GetLength(0); i++)
+                    {
+                        for (int j = 0; j < midBlocks.GetLength(1); j++)
+                        {
+                            Block b = new Block((BlockType)midBlocks[i, j], this);
+                            b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
+                            b.durability = blockDurability;
+                            blocks.Add(b);
+                        }
+                    }
+                    break;
+                case 2:
+                    for (int i = 0; i < mostBlocks.GetLength(0); i++)
+                    {
+                        for (int j = 0; j < mostBlocks.GetLength(1); j++)
+                        {
+                            Block b = new Block((BlockType)mostBlocks[i, j], this);
+                            b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
+                            b.durability = blockDurability;
+                            blocks.Add(b);
+                        }
+                    }
+                    break;
+            }
+
+            // set block durability
+            switch (levelParams[(int)LevelParameter.BlockDurability])
+            {
+                case 0:
+                    blockDurability = 0;
+                    break;
+                case 1:
+                    blockDurability = 1;
+                    break;
+                case 2:
+                    blockDurability = 2;
+                    break;
+            }
+
+            // set progressDifficulty
+            switch (levelParams[(int)LevelParameter.ProgressDifficulty])
+            {
+                case 0:
+                    progressDifficulty = false;
+                    break;
+                case 1:
+                    progressDifficulty = true;
+                    break;
+
             }
 
 
-            if (level == 3 || level == 6 || level >= 9)
+            if (progressDifficulty)
             {
-                for (int i = 0; i < level3.GetLength(0); i++)
-                {
-                    for (int j = 0; j < level3.GetLength(1); j++)
-                    {
-                        Block b = new Block((BlockType)level3[i, j], this);
-                        b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
-                        b.durability = blockDurability;
-                        blocks.Add(b);
-                    }
-                }
+                // increase ball speed
+                if (level != 1)
+                    Ball.DefaultSpeed += level * 10;
+                // shrink paddle
+                if (levelParams[(int)LevelParameter.PaddleWidth] != 2)
+                    levelParams[(int)LevelParameter.PaddleWidth]++;
+                // increase map size
+                if (levelParams[(int)LevelParameter.MapSize] != 2)
+                    levelParams[(int)LevelParameter.MapSize]++;
             }
+
+            // rotate map backgrounds
+            if (levelParams[(int)LevelParameter.Background] == 3)
+                levelParams[(int)LevelParameter.Background] = 0;
+            else
+                levelParams[(int)LevelParameter.Background]++;
 
         }
 
