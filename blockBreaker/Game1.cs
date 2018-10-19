@@ -52,7 +52,7 @@ namespace blockBreaker
             }
 
        // [background, ballSpeed, paddleWidth, availability of power-ups, blockLevel, durabilityOfBlocks, progressDifficulty 0 == false, 1 == true]
-        int[] levelParams = { 0, 0, 0, 50, 0, 0, 1 }; // for now just setting the values here, but going to read them from a file or maybe command line
+        int[] levelParams = { 0, 1, 0, 50, 0, 0, 1 }; // for now just setting the values here, but going to read them from a file or maybe command line
 
         List<Block> blocks = new List<Block>();
         List<Ball> balls = new List<Ball>();
@@ -121,7 +121,7 @@ namespace blockBreaker
             powerUpSFX = Content.Load<SoundEffect>("powerup");
 
             font = Content.Load<SpriteFont>("Score");
-
+            
             // TODO: use this.Content to load your game content here
         }
 
