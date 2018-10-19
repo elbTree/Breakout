@@ -63,10 +63,29 @@ namespace blockBreaker
             puckDongle.CheckForNewPuckData();
 
             // grab values from pressing on the pucks ~500 = 0, ~1000 is max
-            var bluePuckVal = puckDongle.PuckPack0.Loadcell;
-            var yellowPuckVal = puckDongle.PuckPack1.Loadcell;
+            var bluePuckLoad = puckDongle.PuckPack0.Loadcell;
+            var yellowPuckLoad = puckDongle.PuckPack1.Loadcell;
 
-            if (bluePuckVal >= 550)
+            // puck accelerometer values
+            var bluePuckAccX = puckDongle.PuckPack0.Accelerometer[0];
+            var bluePuckAccY = puckDongle.PuckPack0.Accelerometer[1];
+            var bluePuckAccZ = puckDongle.PuckPack0.Accelerometer[2];
+
+            var yellowPuckAccX = puckDongle.PuckPack1.Accelerometer[0];
+            var yellowPuckAccY = puckDongle.PuckPack1.Accelerometer[1];
+            var yellowPuckAccZ = puckDongle.PuckPack1.Accelerometer[2];
+
+            // puck gyrometer values
+            var bluePuckGyroX = puckDongle.PuckPack0.Gyrometer[0];
+            var bluePuckGyroY = puckDongle.PuckPack0.Gyrometer[1];
+            var bluePuckGyroZ = puckDongle.PuckPack0.Gyrometer[2];
+
+            var yellowPuckGyroX = puckDongle.PuckPack1.Gyrometer[0];
+            var yellowPuckGyroY = puckDongle.PuckPack1.Gyrometer[1];
+            var yellowPuckGyroZ = puckDongle.PuckPack1.Gyrometer[2];
+
+
+            if (bluePuckLoad >= 550)
             {
                 bluePuckPressed = true;
                 position.X -= speed * deltaTime;
@@ -74,7 +93,7 @@ namespace blockBreaker
             else
                 bluePuckPressed = false;
 
-            if (yellowPuckVal >= 550)
+            if (yellowPuckLoad >= 550)
             {
                 yellowPuckPressed = true;
                 position.X += speed * deltaTime;
@@ -85,9 +104,14 @@ namespace blockBreaker
             if ((bluePuckPressed && yellowPuckPressed) && !Game1.startOfLevel)
             {
                 Ball.isPaddleBall = false;
-                bluePuckVal = 500;
-                yellowPuckVal = 500;
+                bluePuckLoad = 500;
+                yellowPuckLoad = 500;
             }
+
+            if (bluePuckAccX <= -10f)
+                position.X += speed * deltaTime;
+            if (bluePuckAccX >= 10f)
+                position.X -= speed * deltaTime;
 
             // Clamp paddle to valid range
             position.X = MathHelper.Clamp(position.X, texture.Width / 2, screenWidth - texture.Width / 2);
