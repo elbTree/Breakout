@@ -7,26 +7,26 @@ namespace blockBreaker
     public enum BlockType
     {
         Red = 0,
-        RedFractured,
         RedShattering,
+        RedFractured,
         Yellow, //3
-        YellowFractured,
         YellowShattering,
+        YellowFractured,
         Blue, // 6
-        BlueFractured,
         BlueShattering,
+        BlueFractured,
         Green, // 9
-        GreenFractured,
         GreenShattering,
+        GreenFractured,
         Purple, // 12
-        PurpleFractured,
         PurpleShattering,
+        PurpleFractured,
         Orange, // 15
-        OrangeFractured,
         OrangeShattering,
+        OrangeFractured,
         Grey, // 18
-        GreyFractured,
         GreyShattering,
+        GreyFractured,
         Rainbow // 21
     }
 
@@ -50,65 +50,72 @@ namespace blockBreaker
                 case (BlockType.Red):
                     texture = myGame.Content.Load<Texture2D>("RedBlockFX");
                     break;
-                case (BlockType.RedFractured):
-                    texture = myGame.Content.Load<Texture2D>("RedBlockFracturedFX");
-                    break;
                 case (BlockType.RedShattering):
                     texture = myGame.Content.Load<Texture2D>("RedBlockShatteringFX");
                     break;
+                case (BlockType.RedFractured):
+                    texture = myGame.Content.Load<Texture2D>("RedBlockFracturedFX");
+                    break;
+
                 case (BlockType.Yellow):
                     texture = myGame.Content.Load<Texture2D>("YellowBlockFX");
-                    break;
-                case (BlockType.YellowFractured):
-                    texture = myGame.Content.Load<Texture2D>("YellowBlockFracturedFX");
                     break;
                 case (BlockType.YellowShattering):
                     texture = myGame.Content.Load<Texture2D>("YellowBlockShatteringFX");
                     break;
+                case (BlockType.YellowFractured):
+                    texture = myGame.Content.Load<Texture2D>("YellowBlockFracturedFX");
+                    break;
+
                 case (BlockType.Blue):
                     texture = myGame.Content.Load<Texture2D>("BlueBlockFX");
+                    break;
+                
+                case (BlockType.BlueShattering):
+                    texture = myGame.Content.Load<Texture2D>("BlueBlockShatteringFX");
                     break;
                 case (BlockType.BlueFractured):
                     texture = myGame.Content.Load<Texture2D>("BlueBlockFracturedFX");
                     break;
-                case (BlockType.BlueShattering):
-                    texture = myGame.Content.Load<Texture2D>("BlueBlockShatteringFX");
-                    break;
                 case (BlockType.Green):
                     texture = myGame.Content.Load<Texture2D>("GreenBlockFX");
+                    break;
+                
+                case (BlockType.GreenShattering):
+                    texture = myGame.Content.Load<Texture2D>("GreenBlockShatteringFX");
                     break;
                 case (BlockType.GreenFractured):
                     texture = myGame.Content.Load<Texture2D>("GreenBlockFracturedFX");
                     break;
-                case (BlockType.GreenShattering):
-                    texture = myGame.Content.Load<Texture2D>("GreenBlockShatteringFX");
-                    break;
                 case (BlockType.Purple):
                     texture = myGame.Content.Load<Texture2D>("PurpleBlockFX");
+                    break;
+                
+                case (BlockType.PurpleShattering):
+                    texture = myGame.Content.Load<Texture2D>("PurpleBlockShatteringFX");
                     break;
                 case (BlockType.PurpleFractured):
                     texture = myGame.Content.Load<Texture2D>("PurpleBlockFracturedFX");
                     break;
-                case (BlockType.PurpleShattering):
-                    texture = myGame.Content.Load<Texture2D>("PurpleBlockShatteringFX");
-                    break;
                 case (BlockType.Orange):
                     texture = myGame.Content.Load<Texture2D>("OrangeBlockFX");
+                    break;
+                 case (BlockType.OrangeShattering):
+                    texture = myGame.Content.Load<Texture2D>("OrangeBlockShatteringFX");
                     break;
                 case (BlockType.OrangeFractured):
                     texture = myGame.Content.Load<Texture2D>("OrangeBlockFracturedFX");
                     break;
-                case (BlockType.OrangeShattering):
-                    texture = myGame.Content.Load<Texture2D>("OrangeBlockShatteringFX");
-                    break;
+
                 case (BlockType.Grey):
                     texture = myGame.Content.Load<Texture2D>("GrayBlockFX");
                     break;
-                case (BlockType.GreyFractured):
-                    texture = myGame.Content.Load<Texture2D>("GrayBlockFracturedFX");
-                    break;
+                
                 case (BlockType.GreyShattering):
                     texture = myGame.Content.Load<Texture2D>("GrayBlockShatteringFX");
+                    break;
+                case (BlockType.GreyFractured):
+                    texture = myGame.Content.Load<Texture2D>("GrayBlockFracturedFX");
                     break;
                 case (BlockType.Rainbow):
                     texture = myGame.Content.Load<Texture2D>("RainbowBlockFX");
