@@ -287,7 +287,7 @@
 /processorParam:ResizeToPowerOfTwo=False
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
-/build:paddle_2nd_Smallest.png
+/build:paddle_2nd_Smallest.png;paddle_2nd_smallest.png
 
 #begin paddle_smallest.png
 /importer:TextureImporter
