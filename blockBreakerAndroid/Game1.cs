@@ -9,6 +9,7 @@ using System.Collections.Generic;
 
 // NOTES: Want to be able to adjust paddle width and sensetivity; Collect data (save exactly what the user is doing, and any events (like score, levels, bonuses etc.),
 //        and output to a text file). Also want to keep track of how many days or time the user is playing the game.
+//        Work on puck controls, fix content loading issues (recreated by increasing the difficulty parameter, most likely caused by maps)
 
 
 
@@ -39,7 +40,7 @@ namespace blockBreakerAndroid
         float powerUpChance; // % chance of dropping a powerup, set in CreateLevel
         float powerUpTimer = 0; // used to prevent power-ups from dropping near-simultaneously
         float dataTimer = 0;  // used as timer to print various puck values on the screen slower than fps
-
+        
           public enum LevelParameter
             {
                 Background = 0,    // 0 == Sky, 1 == underwater, 2 == space
@@ -66,23 +67,25 @@ namespace blockBreakerAndroid
         HIDPuckDongle puckDongle = new HIDPuckDongle(Game.Activity);
 
         int screenWidth = 1300;
-        int screenWidthDivisor = 16;
+        int screenWidthDivisor = 16; // 28 used for repsonsive resolution code
         int screenHeight = 760;//800;
         int screenHeightDivisor = 8;
 
         int gameDuration; // how long the game will run for (in seconds) before exiting
-        int difficulty;
+        int gameDifficulty;
 
-
-        public Game1(string contentDir = "CONTENT_DIR", int duration = 99999999)
+        // 11/30/18 difficulty causes a content load error when increased, likely due to a map not loading properly/not being in the pipeline
+        public Game1(string contentDir = "CONTENT_DIR", int duration = 9999, int difficulty = 0)
         {
             // contentDir = "blockBreakerAndroid"
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content"; //contentDir;
             gameDuration = duration;
+            gameDifficulty = difficulty;
             graphics.IsFullScreen = true;
             graphics.PreferredBackBufferWidth = screenWidth;
             graphics.PreferredBackBufferHeight = screenHeight;
+            // SetDifficulty();
         }
 
 
@@ -114,6 +117,9 @@ namespace blockBreakerAndroid
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
+            //GraphicsAdapter graphicsAdapter = graphics.GraphicsDevice.Adapter;
+            //screenWidth = graphicsAdapter.CurrentDisplayMode.Width;
+            //screenHeight = graphicsAdapter.CurrentDisplayMode.Height;
             paddle = new Paddle(this);
             paddle.LoadContent();
             paddle.position = new Vector2(screenWidth / 2, screenHeight - paddle.Height * 2);
@@ -127,7 +133,7 @@ namespace blockBreakerAndroid
             powerUpSFX = Content.Load<SoundEffect>("powerup");
 
             font = Content.Load<SpriteFont>("Score");
-            
+
             // TODO: use this.Content to load your game content here
         }
 
@@ -821,5 +827,36 @@ namespace blockBreakerAndroid
                     break;
             }
         }
+
+        //public void SetDifficulty()
+        //{
+        //    if (gameDifficulty == 0)
+        //    {
+        //        levelParams[(int)LevelParameter.Background] = 0;
+        //        levelParams[(int)LevelParameter.BallSpeed] = 0;
+        //        levelParams[(int)LevelParameter.PaddleWidth] = 0;
+        //        levelParams[(int)LevelParameter.PowerUpFrequency] = 50;
+        //        levelParams[(int)LevelParameter.MapSize] = 0;
+        //        levelParams[(int)LevelParameter.ProgressDifficulty] = 1;
+        //    }
+        //    else if (gameDifficulty == 1)
+        //    {
+        //        levelParams[(int)LevelParameter.Background] = 1;
+        //        levelParams[(int)LevelParameter.BallSpeed] = 1;
+        //        levelParams[(int)LevelParameter.PaddleWidth] = 1;
+        //        levelParams[(int)LevelParameter.PowerUpFrequency] = 50;
+        //        levelParams[(int)LevelParameter.MapSize] = 1;
+        //        levelParams[(int)LevelParameter.ProgressDifficulty] = 1;
+        //    }
+        //    else if (gameDifficulty == 2)
+        //    {
+        //        levelParams[(int)LevelParameter.Background] = 2;
+        //        levelParams[(int)LevelParameter.BallSpeed] = 2;
+        //        levelParams[(int)LevelParameter.PaddleWidth] = 2;
+        //        levelParams[(int)LevelParameter.PowerUpFrequency] = 50;
+        //        levelParams[(int)LevelParameter.MapSize] = 2;
+        //        levelParams[(int)LevelParameter.ProgressDifficulty] = 1;
+        //    }
+        //}
     }
 }
