@@ -9,7 +9,7 @@ using System.Collections.Generic;
 
 // NOTES: Want to be able to adjust paddle width and sensetivity; Collect data (save exactly what the user is doing, and any events (like score, levels, bonuses etc.),
 //        and output to a text file). Also want to keep track of how many days or time the user is playing the game.
-//        Work on puck controls, fix content loading issues (recreated by increasing the difficulty parameter, most likely caused by maps)
+//        Work on puck controls.
 
 
 
@@ -74,8 +74,7 @@ namespace blockBreakerAndroid
         int gameDuration; // how long the game will run for (in seconds) before exiting
         int gameDifficulty;
 
-        // 11/30/18 difficulty causes a content load error when increased, likely due to a map not loading properly/not being in the pipeline
-        public Game1(string contentDir = "CONTENT_DIR", int duration = 9999, int difficulty = 0)
+        public Game1(string contentDir = "CONTENT_DIR", int duration = 9990, int difficulty = 2)
         {
             // contentDir = "blockBreakerAndroid"
             graphics = new GraphicsDeviceManager(this);
@@ -85,7 +84,6 @@ namespace blockBreakerAndroid
             graphics.IsFullScreen = true;
             graphics.PreferredBackBufferWidth = screenWidth;
             graphics.PreferredBackBufferHeight = screenHeight;
-            // SetDifficulty();
         }
 
 
@@ -101,7 +99,6 @@ namespace blockBreakerAndroid
             // TODO: Add your initialization logic here
 
             puckDongle.Open();
-
 
             base.Initialize();
         }
@@ -134,6 +131,8 @@ namespace blockBreakerAndroid
 
             font = Content.Load<SpriteFont>("Score");
 
+            SetDifficulty();
+            CreateLevel();
             // TODO: use this.Content to load your game content here
         }
 
@@ -244,6 +243,7 @@ namespace blockBreakerAndroid
                 ClearLevel();
                 CreateLevel();
             }
+
             dataTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             if (dataTimer > 0.5f)
@@ -272,12 +272,11 @@ namespace blockBreakerAndroid
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             spriteBatch.Begin();
 
-            spriteBatch.Draw(background, /*new Rectangle(0, 0,6803, 1052)*/GraphicsDevice.Viewport.Bounds, Color.White);
+            spriteBatch.Draw(background, /*new Rectangle(0, 0,screenWidth, screenHeight)*/GraphicsDevice.Viewport.Bounds, Color.White);
 
             foreach (Block b in blocks)
                 spriteBatch.Draw(b.Texture, new Rectangle((int)b.position.X,(int)b.position.Y, (int)b.BlockWidth, (int)b.BlockHeight), Color.White);
@@ -546,8 +545,6 @@ namespace blockBreakerAndroid
         }
 
 
-
-
         protected void CreateLevel()
         {
             startOfLevel = true;
@@ -624,7 +621,7 @@ namespace blockBreakerAndroid
                     paddle.Texture = Content.Load<Texture2D>("paddle");
                     break;
                 case 1:
-                    paddle.Texture = Content.Load<Texture2D>("paddle_2nd_smallest");
+                    paddle.Texture = Content.Load<Texture2D>("paddle_2nd_Smallest");
                     break;
                 case 2:
                     paddle.Texture = Content.Load<Texture2D>("paddle_smallest");
@@ -828,35 +825,38 @@ namespace blockBreakerAndroid
             }
         }
 
-        //public void SetDifficulty()
-        //{
-        //    if (gameDifficulty == 0)
-        //    {
-        //        levelParams[(int)LevelParameter.Background] = 0;
-        //        levelParams[(int)LevelParameter.BallSpeed] = 0;
-        //        levelParams[(int)LevelParameter.PaddleWidth] = 0;
-        //        levelParams[(int)LevelParameter.PowerUpFrequency] = 50;
-        //        levelParams[(int)LevelParameter.MapSize] = 0;
-        //        levelParams[(int)LevelParameter.ProgressDifficulty] = 1;
-        //    }
-        //    else if (gameDifficulty == 1)
-        //    {
-        //        levelParams[(int)LevelParameter.Background] = 1;
-        //        levelParams[(int)LevelParameter.BallSpeed] = 1;
-        //        levelParams[(int)LevelParameter.PaddleWidth] = 1;
-        //        levelParams[(int)LevelParameter.PowerUpFrequency] = 50;
-        //        levelParams[(int)LevelParameter.MapSize] = 1;
-        //        levelParams[(int)LevelParameter.ProgressDifficulty] = 1;
-        //    }
-        //    else if (gameDifficulty == 2)
-        //    {
-        //        levelParams[(int)LevelParameter.Background] = 2;
-        //        levelParams[(int)LevelParameter.BallSpeed] = 2;
-        //        levelParams[(int)LevelParameter.PaddleWidth] = 2;
-        //        levelParams[(int)LevelParameter.PowerUpFrequency] = 50;
-        //        levelParams[(int)LevelParameter.MapSize] = 2;
-        //        levelParams[(int)LevelParameter.ProgressDifficulty] = 1;
-        //    }
-        //}
+        public void SetDifficulty()
+        {
+            if (gameDifficulty == 0)
+            {
+                paddle.PaddleTextureName = "paddle";
+                levelParams[(int)LevelParameter.Background] = 0;
+                levelParams[(int)LevelParameter.BallSpeed] = 0;
+                levelParams[(int)LevelParameter.PaddleWidth] = 0;
+                levelParams[(int)LevelParameter.PowerUpFrequency] = 50;
+                levelParams[(int)LevelParameter.MapSize] = 0;
+                levelParams[(int)LevelParameter.ProgressDifficulty] = 1;
+            }
+            else if (gameDifficulty == 1)
+            {
+                paddle.PaddleTextureName = "paddle_2nd_Smallest";
+                levelParams[(int)LevelParameter.Background] = 1;
+                levelParams[(int)LevelParameter.BallSpeed] = 1;
+                levelParams[(int)LevelParameter.PaddleWidth] = 1;
+                levelParams[(int)LevelParameter.PowerUpFrequency] = 50;
+                levelParams[(int)LevelParameter.MapSize] = 1;
+                levelParams[(int)LevelParameter.ProgressDifficulty] = 1;
+            }
+            else if (gameDifficulty == 2)
+            {
+                paddle.PaddleTextureName = "paddle_smallest";
+                levelParams[(int)LevelParameter.Background] = 2;
+                levelParams[(int)LevelParameter.BallSpeed] = 2;
+                levelParams[(int)LevelParameter.PaddleWidth] = 2;
+                levelParams[(int)LevelParameter.PowerUpFrequency] = 50;
+                levelParams[(int)LevelParameter.MapSize] = 2;
+                levelParams[(int)LevelParameter.ProgressDifficulty] = 1;
+            }
+        }
     }
 }
