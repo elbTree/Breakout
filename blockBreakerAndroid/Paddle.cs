@@ -15,6 +15,8 @@ namespace blockBreakerAndroid
              yellowPuckPressed = false;
         float longPaddleTimer = 0f;
 
+        string paddleTextureName;
+
         public Paddle(Game myGame) :
             base(myGame)
         {
@@ -34,6 +36,11 @@ namespace blockBreakerAndroid
             set { speed = value; }
         }
 
+        public String PaddleTextureName
+        {
+            get { return paddleTextureName; }
+            set { paddleTextureName = value; }
+        }
         public float LongPaddleTimer
         {
             get { return longPaddleTimer; }
@@ -122,7 +129,7 @@ namespace blockBreakerAndroid
 
                 if (longPaddleTimer > 10f)
                 {
-                    textureName = "paddle";
+                    textureName = PaddleTextureName;
                     this.LoadContent();
                     longPaddleTimer = 0;
                     isLongPaddle = false;
