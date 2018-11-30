@@ -1,10 +1,11 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FitMiAndroid;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using FitMi_Research_Puck;
+
 
 // NOTES: Want to be able to adjust paddle width and sensetivity; Collect data (save exactly what the user is doing, and any events (like score, levels, bonuses etc.),
 //        and output to a text file). Also want to keep track of how many days or time the user is playing the game.
@@ -62,18 +63,23 @@ namespace blockBreakerAndroid
         
         SpriteFont font;
 
-        HIDPuckDongle puckDongle = new HIDPuckDongle();
+        HIDPuckDongle puckDongle = new HIDPuckDongle(Game.Activity);
 
-        int screenWidth = 1366;
-        int screenHeight = 768;
+        int screenWidth = 1300;
+        int screenWidthDivisor = 16;
+        int screenHeight = 760;//800;
+        int screenHeightDivisor = 8;
+
+        int gameDuration; // how long the game will run for (in seconds) before exiting
+        int difficulty;
 
 
-    
-
-        public Game1()
+        public Game1(string contentDir = "CONTENT_DIR", int duration = 99999999)
         {
+            // contentDir = "blockBreakerAndroid"
             graphics = new GraphicsDeviceManager(this);
-            Content.RootDirectory = "Content";
+            Content.RootDirectory = "Content"; //contentDir;
+            gameDuration = duration;
             graphics.IsFullScreen = true;
             graphics.PreferredBackBufferWidth = screenWidth;
             graphics.PreferredBackBufferHeight = screenHeight;
@@ -148,9 +154,13 @@ namespace blockBreakerAndroid
         protected override void Update(GameTime gameTime)
         {
             powerUpTimer += 0.05f;
+            
+            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape) || gameTime.ElapsedGameTime.TotalSeconds >= gameDuration)
+            {
+                //   Exit();
+                Game.Activity.Finish();
+            }
 
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-               Exit();
             if (Keyboard.GetState().IsKeyDown(Keys.Space) && !startOfLevel)
               {
                   foreach (Ball b in balls)
@@ -261,7 +271,7 @@ namespace blockBreakerAndroid
 
             spriteBatch.Begin();
 
-            spriteBatch.Draw(background, GraphicsDevice.Viewport.Bounds, Color.White);
+            spriteBatch.Draw(background, /*new Rectangle(0, 0,6803, 1052)*/GraphicsDevice.Viewport.Bounds, Color.White);
 
             foreach (Block b in blocks)
                 spriteBatch.Draw(b.Texture, new Rectangle((int)b.position.X,(int)b.position.Y, (int)b.BlockWidth, (int)b.BlockHeight), Color.White);
@@ -273,11 +283,12 @@ namespace blockBreakerAndroid
             {
                 if (b.IsActive)
                     spriteBatch.Draw(b.Texture, b.position, Color.White);
-
-                spriteBatch.DrawString(font, String.Format("Ball Direction.X: {0:#,###0}", b.direction.X.ToString()),
-                                   new Vector2(100, 200), Color.White);
-                spriteBatch.DrawString(font, String.Format("Ball Direction.Y: {0:#,###0}", b.direction.Y.ToString()),
-                                   new Vector2(100, 250), Color.White);
+                
+                // print ball x and y directions
+                //spriteBatch.DrawString(font, String.Format("Ball Direction.X: {0:#,###0}", b.direction.X.ToString()),
+                //                   new Vector2(100, 200), Color.White);
+                //spriteBatch.DrawString(font, String.Format("Ball Direction.Y: {0:#,###0}", b.direction.Y.ToString()),
+                //                   new Vector2(100, 250), Color.White);
             }
             foreach (PowerUp p in powerUps)
             {
@@ -290,9 +301,9 @@ namespace blockBreakerAndroid
 
             if (startOfLevel)
                 spriteBatch.DrawString(font, String.Format("Level {0:#0}", level),
-                                       new Vector2(screenWidth / 2.5f, screenHeight / 12), Color.White, 0, Vector2.Zero, 2, SpriteEffects.None, 0);
+                                       new Vector2(screenWidth / 2, screenHeight / 14), Color.White);
 
-
+            // print blue puck accelerometer values
             //spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[0].ToString(), new Vector2(100, 150), Color.White);
             //spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[1].ToString(), new Vector2(100, 200), Color.White);
             //spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[2].ToString(), new Vector2(100, 250), Color.White);
@@ -335,7 +346,7 @@ namespace blockBreakerAndroid
                 if (!ball.IsPaddleBall)
                 {   
                     paddleHitSFX.Play();
-                    score += 1;
+                    score += 3;
                 }
                 // Reflect based on which part of the paddle is hit
 
@@ -448,7 +459,7 @@ namespace blockBreakerAndroid
                 wallHitSFX.Play();
                 ball.direction.X = -1.0f * ball.direction.X;
             }
-            else if (Math.Abs(ball.position.X - graphics.PreferredBackBufferWidth) < ball.Radius)
+            else if (Math.Abs(ball.position.X - graphics.PreferredBackBufferWidth + ball.Texture.Width * 2 ) < ball.Radius)
             {
                 wallHitSFX.Play();
                 ball.direction.X = -1.0f * ball.direction.X;
@@ -626,7 +637,7 @@ namespace blockBreakerAndroid
                         for (int j = 0; j < leastBlocks.GetLength(1); j++)
                         {
                             Block b = new Block((BlockType)leastBlocks[i, j], this);
-                            b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
+                            b.position = new Vector2(j * b.BlockWidth + screenWidth / screenWidthDivisor, screenHeight / screenHeightDivisor + b.BlockHeight * i);
                             b.durability = blockDurability;
                             blocks.Add(b);
                         }
@@ -638,7 +649,7 @@ namespace blockBreakerAndroid
                         for (int j = 0; j < midBlocks.GetLength(1); j++)
                         {
                             Block b = new Block((BlockType)midBlocks[i, j], this);
-                            b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
+                            b.position = new Vector2(j * b.BlockWidth + screenWidth / screenWidthDivisor, screenHeight / screenHeightDivisor + b.BlockHeight * i);
                             b.durability = blockDurability;
                             blocks.Add(b);
                         }
@@ -650,7 +661,7 @@ namespace blockBreakerAndroid
                         for (int j = 0; j < mostBlocks.GetLength(1); j++)
                         {
                             Block b = new Block((BlockType)mostBlocks[i, j], this);
-                            b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
+                            b.position = new Vector2(j * b.BlockWidth + screenWidth / screenWidthDivisor, screenHeight / screenHeightDivisor + b.BlockHeight * i);
                             b.durability = blockDurability;
                             blocks.Add(b);
                         }

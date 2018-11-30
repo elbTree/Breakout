@@ -45,11 +45,9 @@
     <AndroidLinkMode>SdkOnly</AndroidLinkMode>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="FitMiAndroid">
+    <Reference Include="FitMiAndroid, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>Z:\Games for Clinical Trials\David\FitMi\FitMiAndroid\FitMiAndroid\bin\Debug\FitMiAndroid.dll</HintPath>
-    </Reference>
-    <Reference Include="FitMi_Research_Puck">
-      <HintPath>..\FitMi_Research_Puck.dll</HintPath>
     </Reference>
     <Reference Include="Mono.Android" />
     <Reference Include="mscorlib" />

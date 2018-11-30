@@ -8,7 +8,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using FitMi_Research_Puck;
 
 namespace blockBreakerAndroid
 {
@@ -25,6 +24,8 @@ namespace blockBreakerAndroid
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
+
+            string contentDir = Intent.GetStringExtra("CONTENT_DIR");
             var g = new Game1();
             SetContentView((View)g.Services.GetService(typeof(View)));
             g.Run();

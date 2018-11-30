@@ -64,8 +64,8 @@ namespace blockBreaker
 
         HIDPuckDongle puckDongle = new HIDPuckDongle();
 
-        int screenWidth = 1366;
-        int screenHeight = 768;
+        int screenWidth = 1280;//GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+        int screenHeight = 800;// GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
 
 
     
@@ -269,16 +269,19 @@ namespace blockBreaker
 
             paddle.Draw(spriteBatch);
 
+            
             foreach (Ball b in balls)
             {
                 if (b.IsActive)
                     spriteBatch.Draw(b.Texture, b.position, Color.White);
-
-                spriteBatch.DrawString(font, String.Format("Ball Direction.X: {0:#,###0}", b.direction.X.ToString()),
-                                   new Vector2(100, 200), Color.White);
-                spriteBatch.DrawString(font, String.Format("Ball Direction.Y: {0:#,###0}", b.direction.Y.ToString()),
-                                   new Vector2(100, 250), Color.White);
+                
+                // print ball x and y values
+                //spritebatch.drawstring(font, string.format("ball direction.x: {0:#,###0}", b.direction.x.tostring()),
+                //                   new vector2(100, 200), color.white);
+                //spritebatch.drawstring(font, string.format("ball direction.y: {0:#,###0}", b.direction.y.tostring()),
+                //                   new vector2(100, 250), color.white);
             }
+
             foreach (PowerUp p in powerUps)
             {
                 if (!p.shouldRemove)
@@ -292,7 +295,7 @@ namespace blockBreaker
                 spriteBatch.DrawString(font, String.Format("Level {0:#0}", level),
                                        new Vector2(screenWidth / 2.5f, screenHeight / 12), Color.White, 0, Vector2.Zero, 2, SpriteEffects.None, 0);
 
-
+            // print blue puck accerlerometer values
             //spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[0].ToString(), new Vector2(100, 150), Color.White);
             //spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[1].ToString(), new Vector2(100, 200), Color.White);
             //spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[2].ToString(), new Vector2(100, 250), Color.White);
@@ -626,7 +629,7 @@ namespace blockBreaker
                         for (int j = 0; j < leastBlocks.GetLength(1); j++)
                         {
                             Block b = new Block((BlockType)leastBlocks[i, j], this);
-                            b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
+                            b.position = new Vector2(j * b.BlockWidth + screenWidth / 6, screenHeight / 4 + b.BlockHeight * i);
                             b.durability = blockDurability;
                             blocks.Add(b);
                         }
@@ -638,7 +641,7 @@ namespace blockBreaker
                         for (int j = 0; j < midBlocks.GetLength(1); j++)
                         {
                             Block b = new Block((BlockType)midBlocks[i, j], this);
-                            b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
+                            b.position = new Vector2(j * b.BlockWidth + screenWidth / 6, screenHeight / 4 + b.BlockHeight * i);
                             b.durability = blockDurability;
                             blocks.Add(b);
                         }
@@ -650,7 +653,7 @@ namespace blockBreaker
                         for (int j = 0; j < mostBlocks.GetLength(1); j++)
                         {
                             Block b = new Block((BlockType)mostBlocks[i, j], this);
-                            b.position = new Vector2(j * b.BlockWidth + screenWidth / 12, screenHeight / 6 + b.BlockHeight * i);
+                            b.position = new Vector2(j * b.BlockWidth + screenWidth / 6, screenHeight / 4 + b.BlockHeight * i);
                             b.durability = blockDurability;
                             blocks.Add(b);
                         }

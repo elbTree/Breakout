@@ -2,13 +2,13 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using FitMi_Research_Puck;
+using FitMiAndroid;
 
 namespace blockBreakerAndroid
 {
     class Paddle : GameObject
     {
-        HIDPuckDongle puckDongle = new HIDPuckDongle();
+        HIDPuckDongle puckDongle = new HIDPuckDongle(Game.Activity);
         float speed = 500;
         bool isLongPaddle = false, 
              bluePuckPressed = false, 
@@ -114,7 +114,7 @@ namespace blockBreakerAndroid
                 position.X -= speed * deltaTime;
 
             // Clamp paddle to valid range
-            position.X = MathHelper.Clamp(position.X, texture.Width / 2, screenWidth - texture.Width / 2);
+            position.X = MathHelper.Clamp(position.X, texture.Width / 2, screenWidth - texture.Width / 1.65f);
 
             if (isLongPaddle)
             {
