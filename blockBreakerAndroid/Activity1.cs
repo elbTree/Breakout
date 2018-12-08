@@ -14,7 +14,7 @@ namespace blockBreakerAndroid
     [Activity(Label = "blockBreakerAndroid"
         , MainLauncher = true
         , Icon = "@drawable/icon"
-        , Theme = "@style/Theme.Splash"
+        , Theme = "@android:style/Theme.Black.NoTitleBar.Fullscreen"
         , AlwaysRetainTaskState = true
         , LaunchMode = Android.Content.PM.LaunchMode.SingleInstance
         , ScreenOrientation = ScreenOrientation.FullUser
