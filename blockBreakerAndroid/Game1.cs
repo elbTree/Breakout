@@ -23,6 +23,10 @@ namespace blockBreakerAndroid
         public static GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
+        RenderTarget2D back_buffer;
+        int actual_screen_width = 0;
+        int actual_screen_height = 0;
+
         Paddle paddle;
 
         SoundEffect blockHitSFX,
@@ -66,15 +70,15 @@ namespace blockBreakerAndroid
 
         HIDPuckDongle puckDongle = new HIDPuckDongle(Game.Activity);
 
-        int screenWidth = 1300;
-        int screenWidthDivisor = 16; // 28 used for repsonsive resolution code
-        int screenHeight = 760;//800;
-        int screenHeightDivisor = 8;
+        int screenWidth = 1300; // 1300 for emulator
+        int screenWidthDivisor = 12; //16; // 28 used for repsonsive resolution code
+        int screenHeight = 1080; // 760 for emulator
+        int screenHeightDivisor = 4; // 8;
 
         int gameDuration; // how long the game will run for (in seconds) before exiting
         int gameDifficulty;
 
-        public Game1(string contentDir = "CONTENT_DIR", int duration = 9990, int difficulty = 2)
+        public Game1(string contentDir = "CONTENT_DIR", int duration = 9990, int difficulty = 0)
         {
             // contentDir = "blockBreakerAndroid"
             graphics = new GraphicsDeviceManager(this);
@@ -111,6 +115,13 @@ namespace blockBreakerAndroid
         /// </summary>
         protected override void LoadContent()
         {
+
+            back_buffer = new RenderTarget2D(graphics.GraphicsDevice, screenWidth, screenHeight);
+            Android.Graphics.Point actual_screen_size = new Android.Graphics.Point();
+            Game.Activity.WindowManager.DefaultDisplay.GetSize(actual_screen_size);
+            actual_screen_width = actual_screen_size.X;
+            actual_screen_height = actual_screen_size.Y;
+
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
@@ -272,11 +283,14 @@ namespace blockBreakerAndroid
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
+            // BEGIN comment out to not use render target
+            GraphicsDevice.SetRenderTarget(back_buffer);
+            // END
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
             spriteBatch.Begin();
 
-            spriteBatch.Draw(background, /*new Rectangle(0, 0,screenWidth, screenHeight)*/GraphicsDevice.Viewport.Bounds, Color.White);
+            spriteBatch.Draw(background, new Rectangle(0, 0,background.Width, background.Height)/*GraphicsDevice.Viewport.Bounds*/, Color.White);
 
             foreach (Block b in blocks)
                 spriteBatch.Draw(b.Texture, new Rectangle((int)b.position.X,(int)b.position.Y, (int)b.BlockWidth, (int)b.BlockHeight), Color.White);
@@ -314,6 +328,14 @@ namespace blockBreakerAndroid
             //spriteBatch.DrawString(font, puckDongle.PuckPack0.Accelerometer[2].ToString(), new Vector2(100, 250), Color.White);
 
             spriteBatch.End();
+
+            // BEGIN comment out to not use render target 
+            GraphicsDevice.SetRenderTarget(null);
+
+            spriteBatch.Begin();
+            spriteBatch.Draw(back_buffer, new Rectangle(0, 0, actual_screen_width, actual_screen_height), Color.White);
+            spriteBatch.End();
+            // END
             base.Draw(gameTime);
         }
 
