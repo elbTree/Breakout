@@ -78,7 +78,7 @@ namespace blockBreakerAndroid
         int gameDuration; // how long the game will run for (in seconds) before exiting
         int gameDifficulty;
 
-        public Game1(string contentDir = "CONTENT_DIR", int duration = 9990, int difficulty = 0)
+        public Game1(string contentDir = "CONTENT_DIR", int duration = 600, int difficulty = 0)
         {
             // contentDir = "blockBreakerAndroid"
             graphics = new GraphicsDeviceManager(this);
@@ -284,9 +284,9 @@ namespace blockBreakerAndroid
         protected override void Draw(GameTime gameTime)
         {
             // BEGIN comment out to not use render target
-            GraphicsDevice.SetRenderTarget(back_buffer);
+           // GraphicsDevice.SetRenderTarget(back_buffer);
             // END
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.Black);
 
             spriteBatch.Begin();
 
@@ -330,11 +330,11 @@ namespace blockBreakerAndroid
             spriteBatch.End();
 
             // BEGIN comment out to not use render target 
-            GraphicsDevice.SetRenderTarget(null);
+            //GraphicsDevice.SetRenderTarget(null);
 
-            spriteBatch.Begin();
-            spriteBatch.Draw(back_buffer, new Rectangle(0, 0, actual_screen_width, actual_screen_height), Color.White);
-            spriteBatch.End();
+            //spriteBatch.Begin();
+            //spriteBatch.Draw(back_buffer, new Rectangle(0, 0, actual_screen_width, actual_screen_height), Color.White);
+            //spriteBatch.End();
             // END
             base.Draw(gameTime);
         }
@@ -486,7 +486,7 @@ namespace blockBreakerAndroid
                 wallHitSFX.Play();
                 ball.direction.X = -1.0f * ball.direction.X;
             }
-            else if (Math.Abs(ball.position.X - graphics.PreferredBackBufferWidth + ball.Texture.Width * 2 ) < ball.Radius)
+            else if (Math.Abs(ball.position.X - graphics.PreferredBackBufferWidth - ball.Texture.Width * 3) < ball.Radius)
             {
                 wallHitSFX.Play();
                 ball.direction.X = -1.0f * ball.direction.X;

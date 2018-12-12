@@ -92,7 +92,7 @@ namespace blockBreakerAndroid
             var yellowPuckGyroZ = puckDongle.PuckPack1.Gyrometer[2];
 
 
-            if (bluePuckLoad >= 550)
+            if (bluePuckLoad >= 510)
             {
                 bluePuckPressed = true;
                 position.X -= speed * deltaTime;
@@ -100,7 +100,7 @@ namespace blockBreakerAndroid
             else
                 bluePuckPressed = false;
 
-            if (yellowPuckLoad >= 550)
+            if (yellowPuckLoad >= 510)
             {
                 yellowPuckPressed = true;
                 position.X += speed * deltaTime;
@@ -121,7 +121,7 @@ namespace blockBreakerAndroid
                 position.X -= speed * deltaTime;
 
             // Clamp paddle to valid range
-            position.X = MathHelper.Clamp(position.X, texture.Width / 2, screenWidth - texture.Width / 1.65f);
+            position.X = MathHelper.Clamp(position.X, texture.Width / 2, screenWidth - texture.Width / 4.5f);
 
             if (isLongPaddle)
             {
